@@ -10,6 +10,9 @@ type RepoInfo = {
   delay: number
 }
 
+const baseBranch = process.env.BASE_BRANCH
+const headBranch = process.env.HEAD_BRANCH
+
 export default async function rcBot(): Promise<void> {
   try {
     const organization = process.env.ORGANIZATION_NAME
@@ -42,8 +45,8 @@ async function getInfosFromAffectedBranches(
       const compareData = await compareTwoBranches({
         owner: repo.owner.login,
         repo: repo.name,
-        base: process.env.BASE_BRANCH,
-        head: process.env.HEAD_BRANCH
+        base: baseBranch,
+        head: headBranch
       })
 
       const { files = [], commits = [] } = compareData.data
@@ -77,7 +80,8 @@ function getReminderMessage(repos: RepoInfo[]): string {
 
   if (repos.length) {
     message +=
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE RC TO DEVELOP BRANCH.\n'
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
+      `PLEASE MERGE ${headBranch.toUpperCase()} TO ${baseBranch.toUpperCase()} BRANCH.\n`
 
     repos.forEach((repo) => {
       const { authors, repoName, commitsCount } = repo

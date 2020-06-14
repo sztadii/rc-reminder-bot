@@ -75,7 +75,7 @@ describe('rc-bot', () => {
     expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
     const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE RC TO DEVELOP BRANCH.\n' +
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
       '-----------------\n' +
       'Repo: react\n' +
       'Author of not updated commit: Iron Man\n' +
@@ -143,7 +143,7 @@ describe('rc-bot', () => {
     expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
     const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE RC TO DEVELOP BRANCH.\n' +
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
       '-----------------\n' +
       'Repo: react\n' +
       'Author of not updated commit: Thor\n' +
