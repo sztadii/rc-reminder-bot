@@ -2,6 +2,7 @@ import moment from 'moment'
 import { getAllOrganizationRepos, compareTwoBranches } from './services/github-service'
 import { postMessageToReminderChannel } from './services/slackbot-service'
 import { ReposListForOrgResponseData } from '@octokit/types'
+import { baseBranch, headBranch, organization } from './config'
 
 type RepoInfo = {
   repoName: string
@@ -10,12 +11,8 @@ type RepoInfo = {
   delay: number
 }
 
-const baseBranch = process.env.BASE_BRANCH || 'develop'
-const headBranch = process.env.HEAD_BRANCH || 'master'
-
 export default async function rcBot(): Promise<void> {
   try {
-    const organization = process.env.ORGANIZATION_NAME
     const allOrganizationRepos = await getAllOrganizationRepos(organization)
     const infosFromAffectedBranches = await getInfosFromAffectedBranches(allOrganizationRepos)
 
