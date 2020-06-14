@@ -36,8 +36,8 @@ async function getInfosFromAffectedBranches(
       const compareData = await compareTwoBranches({
         owner: repo.owner.login,
         repo: repo.name,
-        base: 'develop',
-        head: 'master'
+        base: process.env.BASE_BRANCH,
+        head: process.env.HEAD_BRANCH
       })
 
       const { files = [], commits = [] } = compareData.data
