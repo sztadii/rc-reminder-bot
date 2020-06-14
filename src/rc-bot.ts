@@ -16,13 +16,19 @@ export default async function rcBot(): Promise<void> {
     const allOrganizationRepos = await getAllOrganizationRepos(organization)
     const infosFromAffectedBranches = await getInfosFromAffectedBranches(allOrganizationRepos)
 
-    if (!infosFromAffectedBranches.length) return
+    if (!infosFromAffectedBranches.length) {
+      const goodJobMessage = 'All your repos are looking well. Good job team :)'
+      await postMessageToReminderChannel(goodJobMessage)
+      return
+    }
 
     const reminderMessage = getReminderMessage(infosFromAffectedBranches)
     await postMessageToReminderChannel(reminderMessage)
   } catch (e) {
+    console.error('===')
     console.error('Something went wrong')
     console.error(e)
+    console.error('===')
   }
 }
 

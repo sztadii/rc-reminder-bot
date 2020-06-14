@@ -88,7 +88,7 @@ describe('rc-bot', () => {
     expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
-  it('do not send any message to the slack channel if compared branches have no difference', async () => {
+  it('send `good job` message if all repos are correctly updated', async () => {
     const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
     const firstCompare = { data: { files: [] } }
 
@@ -97,7 +97,9 @@ describe('rc-bot', () => {
 
     await rcBot()
 
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(0)
+    const expectedMessage = 'All your repos are looking well. Good job team :)'
+    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
   it('do not send any message to the slack channel if github api throw an error', async () => {
