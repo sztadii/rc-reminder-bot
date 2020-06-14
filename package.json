@@ -1,5 +1,5 @@
 {
-  "name": "rc-bot",
+  "name": "rc-reminder-bot",
   "author": "sztadii",
   "scripts": {
     "start": "npm run build && npm run exec",
