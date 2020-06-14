@@ -1,0 +1,26 @@
+name: Daily job
+
+on:
+  schedule:
+    # To set specific time please check https://crontab.guru
+    - cron:  '0 4 * * *'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Dependency instalation
+        run: npm ci
+
+      - name: Trigger script to send proper slack message
+        run: npm run start-ci
+        env:
+          ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
