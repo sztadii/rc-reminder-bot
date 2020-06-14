@@ -10,8 +10,8 @@ type RepoInfo = {
   delay: number
 }
 
-const baseBranch = process.env.BASE_BRANCH
-const headBranch = process.env.HEAD_BRANCH
+const baseBranch = process.env.BASE_BRANCH || 'develop'
+const headBranch = process.env.HEAD_BRANCH || 'master'
 
 export default async function rcBot(): Promise<void> {
   try {
