@@ -76,26 +76,22 @@ async function getInfosFromAffectedBranches(
 }
 
 function getReminderMessage(repos: RepoInfo[]): string {
-  let message = ''
+  let message =
+    'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
+    `PLEASE MERGE ${headBranch.toUpperCase()} TO ${baseBranch.toUpperCase()} BRANCH.\n`
 
-  if (repos.length) {
-    message +=
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
-      `PLEASE MERGE ${headBranch.toUpperCase()} TO ${baseBranch.toUpperCase()} BRANCH.\n`
+  repos.forEach((repo) => {
+    const { authors, repoName, commitsCount } = repo
 
-    repos.forEach((repo) => {
-      const { authors, repoName, commitsCount } = repo
+    const authorTitle = `Author${authors.length > 1 ? 's' : ''}`
+    const commitTitle = `commit${commitsCount > 1 ? 's' : ''}`
+    const userTitle = `${authors.join(', ')}`
+    message += '-----------------\n'
+    message += `Repo: ${repoName}\n`
+    message += `${authorTitle} of not updated ${commitTitle}: ${userTitle}\n`
 
-      const authorTitle = `Author${authors.length > 1 ? 's' : ''}`
-      const commitTitle = `commit${commitsCount > 1 ? 's' : ''}`
-      const userTitle = `${authors.join(', ')}`
-      message += '-----------------\n'
-      message += `Repo: ${repoName}\n`
-      message += `${authorTitle} of not updated ${commitTitle}: ${userTitle}\n`
-
-      if (repo.delay) message += `Delay: ${repo.delay} day${repo.delay > 1 ? 's' : ''}\n`
-    })
-  }
+    if (repo.delay) message += `Delay: ${repo.delay} day${repo.delay > 1 ? 's' : ''}\n`
+  })
 
   return message
 }
