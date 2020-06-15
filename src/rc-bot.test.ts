@@ -9,8 +9,8 @@ describe('RCBot', () => {
   let githubService: GithubService
 
   beforeEach(() => {
-    slackBotService = new SlackBotService()
-    githubService = new GithubService()
+    slackBotService = new SlackBotService('mock')
+    githubService = new GithubService('mock')
     rcBot = new RCBot(
       {
         organization: 'Spotify',

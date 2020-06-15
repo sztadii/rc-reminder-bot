@@ -3,7 +3,7 @@ import axios, { AxiosPromise } from 'axios'
 type PostMessageType = AxiosPromise | void
 
 export default class SlackBotService {
-  constructor(private webHookURL = '') {}
+  constructor(private webHookURL: string) {}
 
   postMessageToReminderChannel(message: string): PostMessageType {
     const wrappedMessage = '```' + message + '```'

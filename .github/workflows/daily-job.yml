@@ -22,6 +22,7 @@ jobs:
         run: npm run start-ci
         env:
           ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
-          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
           BASE_BRANCH: develop
           HEAD_BRANCH: master
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
