@@ -3,15 +3,18 @@
   "author": "sztadii",
   "scripts": {
     "start": "npm run local-validate && npm run build && npm run exec",
+    "start-dev": "npm run local-validate && npm run exec-dev",
     "start-prod": "npm run local-validate && npm run build && npm run exec-prod",
     "start-ci": "npm run build && npm run exec-ci",
     "local-validate": "node local-validation.js",
     "build": "tsc",
     "exec": "node -r dotenv/config dist/index.js",
+    "exec-dev": "ts-node-dev --respawn --transpileOnly -r dotenv/config src/index.ts",
     "exec-prod": "NODE_ENV=production node -r dotenv/config dist/index.js",
     "exec-ci": "NODE_ENV=production node dist/index.js",
     "format": "prettier --ignore-path .gitignore --write '**/*.{ts,md,json}'",
     "lint": "eslint './src/**/*.ts' --ext='.ts' --ignore-path .gitignore --color --max-warnings 0 --fix",
+    "test-watch": "jest --silent --watch",
     "test": "jest --silent"
   },
   "license": "ISC",
@@ -39,7 +42,8 @@
     "husky": "^4.2.5",
     "jest": "^26.0.1",
     "lint-staged": "^10.2.10",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "ts-node-dev": "^1.0.0-pre.48"
   },
   "husky": {
     "hooks": {
