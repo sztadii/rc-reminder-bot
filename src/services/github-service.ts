@@ -8,7 +8,7 @@ type compareTwoBranchesResponse = RestEndpointMethodTypes['repos']['compareCommi
 export default class GithubService {
   private githubService: Octokit
 
-  constructor(accessToken = '') {
+  constructor(accessToken: string) {
     this.githubService = new Octokit({ auth: accessToken })
   }
 
