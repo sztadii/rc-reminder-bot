@@ -154,4 +154,86 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
+
+  it('works well with different branches', async () => {
+    const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
+
+    const firstBranchDiff = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Batman'
+            },
+            commit: {
+              committer: {
+                date: moment().subtract(5, 'days')
+              }
+            }
+          }
+        ]
+      }
+    }
+
+    mockAllValues(allRepos, firstBranchDiff)
+
+    rcBot = new RCBot(
+      {
+        organization: 'Github',
+        baseBranch: 'replica',
+        headBranch: 'main'
+      },
+      githubService,
+      slackBotService
+    )
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+
+    const expectedMessage =
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MAIN TO REPLICA BRANCH.\n' +
+      '-----------------\n' +
+      'Repo: react\n' +
+      'Author of not updated commit: Batman\n' +
+      'Delay: 5 days\n'
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+  })
+
+  it('do not display commits delay in slack message if is equal 0', async () => {
+    const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
+
+    const firstBranchDiff = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Capitan America'
+            },
+            commit: {
+              committer: {
+                date: moment()
+              }
+            }
+          }
+        ]
+      }
+    }
+
+    mockAllValues(allRepos, firstBranchDiff)
+
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+
+    const expectedMessage =
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
+      '-----------------\n' +
+      'Repo: react\n' +
+      'Author of not updated commit: Capitan America\n'
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+  })
 })
