@@ -3,7 +3,7 @@ name: Daily job
 on:
   schedule:
     # To set specific time please check https://crontab.guru
-    - cron:  '30 4 * * *'
+    - cron:  '0 6 * * *'
 
 jobs:
   trigger:
