@@ -9,6 +9,9 @@ export default class GithubService {
   private githubService: Octokit
 
   constructor(accessToken: string) {
+    if (!accessToken?.length) {
+      throw new Error('accessToken is empty :(')
+    }
     this.githubService = new Octokit({ auth: accessToken })
   }
 

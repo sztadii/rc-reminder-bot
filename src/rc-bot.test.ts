@@ -3,6 +3,22 @@ import RCBot from './rc-bot'
 import SlackBotService from './services/slackbot-service'
 import GithubService from './services/github-service'
 
+describe('GithubService', () => {
+  it('throw an error if accessToken is empty', () => {
+    expect(() => {
+      new GithubService('')
+    }).toThrow('accessToken is empty :(')
+  })
+})
+
+describe('SlackBotService', () => {
+  it('throw an error if webHookURL is empty', () => {
+    expect(() => {
+      new SlackBotService('')
+    }).toThrow('webHookURL is empty :(')
+  })
+})
+
 describe('RCBot', () => {
   let rcBot: RCBot
   let slackBotService: SlackBotService
@@ -105,14 +121,17 @@ describe('RCBot', () => {
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
-  it('do not send any message to the slack channel if github api throw an error', async () => {
+  it('send error message when something went wrong', async () => {
     mockAllValues(() => {
       throw new Error('500')
     })
 
     await rcBot.checkBranches()
 
-    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(0)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
+      'Something went wrong :('
+    )
   })
 
   it('send message only about active repos', async () => {
@@ -235,5 +254,31 @@ describe('RCBot', () => {
       'Author of not updated commit: Capitan America\n'
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+  })
+
+  it('throw an error if required dependencies are missing', () => {
+    expect(() => {
+      rcBot = new RCBot(
+        {
+          organization: 'Spotify',
+          baseBranch: 'develop',
+          headBranch: 'master'
+        },
+        new GithubService(''),
+        new SlackBotService('aaa')
+      )
+    }).toThrow('accessToken is empty :(')
+
+    expect(() => {
+      rcBot = new RCBot(
+        {
+          organization: '',
+          baseBranch: 'develop',
+          headBranch: 'master'
+        },
+        new GithubService('aaa'),
+        new SlackBotService('aaa')
+      )
+    }).toThrow('config do not have all required values')
   })
 })

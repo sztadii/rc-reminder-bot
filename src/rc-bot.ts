@@ -21,7 +21,13 @@ export default class RCBot {
     private config: RCBotConfig,
     private githubService: GithubService,
     private slackBotService: SlackBotService
-  ) {}
+  ) {
+    const hasAllRequiredValues =
+      config.organization.length && config.headBranch.length && config.baseBranch.length
+    if (!hasAllRequiredValues) {
+      throw new Error('config do not have all required values')
+    }
+  }
 
   async checkBranches(): Promise<void> {
     try {
@@ -41,10 +47,7 @@ export default class RCBot {
       const reminderMessage = this.getReminderMessage(infosFromAffectedBranches)
       await this.slackBotService.postMessageToReminderChannel(reminderMessage)
     } catch (e) {
-      console.error('===')
-      console.error('Something went wrong')
-      console.error(e)
-      console.error('===')
+      await this.slackBotService.postMessageToReminderChannel('Something went wrong :(')
     }
   }
 

@@ -11,7 +11,7 @@
     "exec-ci": "NODE_ENV=production node dist/index.js",
     "format": "prettier --ignore-path .gitignore --write '**/*.{ts,md,json}'",
     "lint": "eslint './src/**/*.ts' --ext='.ts' --ignore-path .gitignore --color --max-warnings 0 --fix",
-    "test": "jest --silent --coverage"
+    "test": "jest --silent"
   },
   "license": "ISC",
   "dependencies": {
