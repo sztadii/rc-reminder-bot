@@ -2,9 +2,10 @@
   "name": "rc-reminder-bot",
   "author": "sztadii",
   "scripts": {
-    "start": "npm run build && npm run exec",
-    "start-prod": "npm run build && npm run exec-prod",
+    "start": "npm run local-validate && npm run build && npm run exec",
+    "start-prod": "npm run local-validate && npm run build && npm run exec-prod",
     "start-ci": "npm run build && npm run exec-ci",
+    "local-validate": "node local-validation.js",
     "build": "tsc",
     "exec": "node -r dotenv/config dist/index.js",
     "exec-prod": "NODE_ENV=production node -r dotenv/config dist/index.js",
