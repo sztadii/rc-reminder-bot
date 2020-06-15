@@ -1,8 +1,7 @@
 import moment from 'moment'
-import { getAllOrganizationRepos, compareTwoBranches } from './services/github-service'
-import { postMessageToReminderChannel } from './services/slackbot-service'
+import GithubService from './services/github-service'
+import SlackBotService from './services/slackbot-service'
 import { ReposListForOrgResponseData } from '@octokit/types'
-import { baseBranch, headBranch, organization } from './config'
 
 type RepoInfo = {
   repoName: string
@@ -11,84 +10,100 @@ type RepoInfo = {
   delay: number
 }
 
-export default async function rcBot(): Promise<void> {
-  try {
-    const allOrganizationRepos = await getAllOrganizationRepos(organization)
-    const infosFromAffectedBranches = await getInfosFromAffectedBranches(allOrganizationRepos)
-
-    if (!infosFromAffectedBranches.length) {
-      const goodJobMessage = 'All your repos are looking well. Good job team :)'
-      await postMessageToReminderChannel(goodJobMessage)
-      return
-    }
-
-    const reminderMessage = getReminderMessage(infosFromAffectedBranches)
-    await postMessageToReminderChannel(reminderMessage)
-  } catch (e) {
-    console.error('===')
-    console.error('Something went wrong')
-    console.error(e)
-    console.error('===')
-  }
+type RCBotConfig = {
+  baseBranch: string
+  headBranch: string
+  organization: string
 }
 
-async function getInfosFromAffectedBranches(
-  repos: ReposListForOrgResponseData
-): Promise<RepoInfo[]> {
-  const allBranchesResponses = repos.map(async (repo) => {
-    if (repo.archived) return null
+export default class RCBot {
+  constructor(
+    private config: RCBotConfig,
+    private githubService: GithubService,
+    private slackBotService: SlackBotService
+  ) {}
 
+  async checkBranches(): Promise<void> {
     try {
-      const compareData = await compareTwoBranches({
-        owner: repo.owner.login,
-        repo: repo.name,
-        base: baseBranch,
-        head: headBranch
-      })
+      const allOrganizationRepos = await this.githubService.getAllOrganizationRepos(
+        this.config.organization
+      )
+      const infosFromAffectedBranches = await this.getInfosFromAffectedBranches(
+        allOrganizationRepos
+      )
 
-      const { files = [], commits = [] } = compareData.data
-
-      if (!files.length) return null
-
-      const allAuthors = commits.map((commit) => commit?.author?.login).filter(Boolean)
-      const authors = [...new Set(allAuthors)]
-
-      const current = moment()
-      const past = moment(commits[0].commit.committer.date)
-      const firstCommitDelay = current.diff(past, 'days')
-
-      return {
-        repoName: repo.name,
-        commitsCount: commits.length,
-        authors,
-        delay: firstCommitDelay
+      if (!infosFromAffectedBranches.length) {
+        const goodJobMessage = 'All your repos are looking well. Good job team :)'
+        await this.slackBotService.postMessageToReminderChannel(goodJobMessage)
+        return
       }
+
+      const reminderMessage = this.getReminderMessage(infosFromAffectedBranches)
+      await this.slackBotService.postMessageToReminderChannel(reminderMessage)
     } catch (e) {
-      return null
+      console.error('===')
+      console.error('Something went wrong')
+      console.error(e)
+      console.error('===')
     }
-  })
+  }
 
-  const allBranchesInfos = await Promise.all(allBranchesResponses)
-  return allBranchesInfos.filter(Boolean)
-}
+  async getInfosFromAffectedBranches(repos: ReposListForOrgResponseData): Promise<RepoInfo[]> {
+    const allBranchesResponses = repos.map(async (repo) => {
+      if (repo.archived) return null
 
-function getReminderMessage(repos: RepoInfo[]): string {
-  let message =
-    'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
-    `PLEASE MERGE ${headBranch.toUpperCase()} TO ${baseBranch.toUpperCase()} BRANCH.\n`
+      try {
+        const compareData = await this.githubService.compareTwoBranches({
+          owner: repo.owner.login,
+          repo: repo.name,
+          base: this.config.baseBranch,
+          head: this.config.headBranch
+        })
 
-  repos.forEach((repo) => {
-    const { authors, repoName, commitsCount } = repo
+        const { files = [], commits = [] } = compareData.data
 
-    const authorTitle = `Author${authors.length > 1 ? 's' : ''}`
-    const commitTitle = `commit${commitsCount > 1 ? 's' : ''}`
-    const userTitle = `${authors.join(', ')}`
-    message += '-----------------\n'
-    message += `Repo: ${repoName}\n`
-    message += `${authorTitle} of not updated ${commitTitle}: ${userTitle}\n`
+        if (!files.length) return null
 
-    if (repo.delay) message += `Delay: ${repo.delay} day${repo.delay > 1 ? 's' : ''}\n`
-  })
+        const allAuthors = commits.map((commit) => commit?.author?.login).filter(Boolean)
+        const authors = [...new Set(allAuthors)]
 
-  return message
+        const current = moment()
+        const past = moment(commits[0].commit.committer.date)
+        const firstCommitDelay = current.diff(past, 'days')
+
+        return {
+          repoName: repo.name,
+          commitsCount: commits.length,
+          authors,
+          delay: firstCommitDelay
+        }
+      } catch (e) {
+        return null
+      }
+    })
+
+    const allBranchesInfos = await Promise.all(allBranchesResponses)
+    return allBranchesInfos.filter(Boolean)
+  }
+
+  getReminderMessage(repos: RepoInfo[]): string {
+    let message =
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
+      `PLEASE MERGE ${this.config.headBranch.toUpperCase()} TO ${this.config.baseBranch.toUpperCase()} BRANCH.\n`
+
+    repos.forEach((repo) => {
+      const { authors, repoName, commitsCount } = repo
+
+      const authorTitle = `Author${authors.length > 1 ? 's' : ''}`
+      const commitTitle = `commit${commitsCount > 1 ? 's' : ''}`
+      const userTitle = `${authors.join(', ')}`
+      message += '-----------------\n'
+      message += `Repo: ${repoName}\n`
+      message += `${authorTitle} of not updated ${commitTitle}: ${userTitle}\n`
+
+      if (repo.delay) message += `Delay: ${repo.delay} day${repo.delay > 1 ? 's' : ''}\n`
+    })
+
+    return message
+  }
 }

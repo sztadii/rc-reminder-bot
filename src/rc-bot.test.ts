@@ -1,36 +1,42 @@
 import moment from 'moment'
-import rcBot from './rc-bot'
-import * as githubService from './services/github-service'
-import * as slackService from './services/slackbot-service'
+import RCBot from './rc-bot'
+import SlackBotService from './services/slackbot-service'
+import GithubService from './services/github-service'
 
-jest.mock('./services/github-service')
-jest.mock('./services/slackbot-service')
+describe('RCBot', () => {
+  let rcBot: RCBot
+  let slackBotService: SlackBotService
+  let githubService: GithubService
 
-const mockedGithubService = githubService as jest.Mocked<typeof githubService>
-const mockedSlackService = slackService as jest.Mocked<typeof slackService>
+  beforeEach(() => {
+    slackBotService = new SlackBotService()
+    githubService = new GithubService()
+    rcBot = new RCBot(
+      {
+        organization: 'Spotify',
+        baseBranch: 'develop',
+        headBranch: 'master'
+      },
+      githubService,
+      slackBotService
+    )
 
-function getAllOrganizationReposMock(mockRepos) {
-  mockedGithubService.getAllOrganizationRepos.mockResolvedValueOnce(mockRepos)
-}
+    slackBotService.postMessageToReminderChannel = jest.fn()
+  })
 
-function getAllOrganizationReposErrorMock() {
-  mockedGithubService.getAllOrganizationRepos.mockRejectedValue('500 error')
-}
+  function mockAllValues(allRepos, firstCompare = undefined, secondCompare = undefined) {
+    jest.spyOn(githubService, 'getAllOrganizationRepos').mockImplementationOnce(() => allRepos)
+    jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => firstCompare)
+    jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => secondCompare)
+  }
 
-function compareTwoBranchesMock(mockCompareData) {
-  mockedGithubService.compareTwoBranches.mockResolvedValueOnce(mockCompareData)
-}
-
-beforeEach(jest.resetAllMocks)
-
-describe('rc-bot', () => {
   it('send message to the slack channel about not updated repositories', async () => {
     const allRepos = [
       { name: 'react', owner: { login: 'facebook' } },
       { name: 'typescript', owner: { login: 'microsoft' } }
     ]
 
-    const firstCompare = {
+    const firstBranchDiff = {
       data: {
         files: ['some.js'],
         commits: [
@@ -48,7 +54,7 @@ describe('rc-bot', () => {
       }
     }
 
-    const secondCompare = {
+    const secondBranchDiff = {
       data: {
         files: ['some.js'],
         commits: [
@@ -66,13 +72,11 @@ describe('rc-bot', () => {
       }
     }
 
-    getAllOrganizationReposMock(allRepos)
-    compareTwoBranchesMock(firstCompare)
-    compareTwoBranchesMock(secondCompare)
+    mockAllValues(allRepos, firstBranchDiff, secondBranchDiff)
 
-    await rcBot()
+    await rcBot.checkBranches()
 
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
     const expectedMessage =
       'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
@@ -85,29 +89,30 @@ describe('rc-bot', () => {
       'Author of not updated commit: Hulk\n' +
       'Delay: 5 days\n'
 
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
   it('send `good job` message if all repos are correctly updated', async () => {
     const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
-    const firstCompare = { data: { files: [] } }
+    const firstBranchDiff = { data: { files: [] } }
 
-    getAllOrganizationReposMock(allRepos)
-    compareTwoBranchesMock(firstCompare)
+    mockAllValues(allRepos, firstBranchDiff)
 
-    await rcBot()
+    await rcBot.checkBranches()
 
     const expectedMessage = 'All your repos are looking well. Good job team :)'
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
   it('do not send any message to the slack channel if github api throw an error', async () => {
-    getAllOrganizationReposErrorMock()
+    mockAllValues(() => {
+      throw new Error('500')
+    })
 
-    await rcBot()
+    await rcBot.checkBranches()
 
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(0)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(0)
   })
 
   it('send message only about active repos', async () => {
@@ -116,7 +121,7 @@ describe('rc-bot', () => {
       { name: 'angular-js', owner: { login: 'google' }, archived: true }
     ]
 
-    const firstCompare = {
+    const firstBranchDiff = {
       data: {
         files: ['some.js'],
         commits: [
@@ -134,13 +139,11 @@ describe('rc-bot', () => {
       }
     }
 
-    getAllOrganizationReposMock(allRepos)
-    compareTwoBranchesMock(firstCompare)
-    compareTwoBranchesMock(firstCompare)
+    mockAllValues(allRepos, firstBranchDiff, firstBranchDiff)
 
-    await rcBot()
+    await rcBot.checkBranches()
 
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
     const expectedMessage =
       'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
@@ -149,6 +152,6 @@ describe('rc-bot', () => {
       'Author of not updated commit: Thor\n' +
       'Delay: 666 days\n'
 
-    expect(mockedSlackService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 })
