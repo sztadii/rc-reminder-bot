@@ -8,7 +8,7 @@ const rcBot = new RCBot(
     baseBranch: process.env.BASE_BRANCH,
     headBranch: process.env.HEAD_BRANCH
   },
-  new GithubService(),
-  new SlackBotService()
+  new GithubService(process.env.GH_ACCESS_TOKEN),
+  new SlackBotService(process.env.SLACK_CHANNEL_WEBHOOK_URL)
 )
 rcBot.checkBranches()
