@@ -41,7 +41,7 @@ npm run start-prod
 
 ## How get SLACK_CHANNEL_WEBHOOK_URL
 
-To get SLACK_CHANNEL_WEBHOOK_URL you need to create slack app `https://api.slack.com/apps?new_app=1`. <br/>
+To get SLACK_CHANNEL_WEBHOOK_URL you need to create slack app, so please visit the [LINK](https://api.slack.com/apps?new_app=1). <br/>
 When you will create it then you will need to click `Incoming Webhooks` link and active it. <br/>
 Then you need to create a new hook by clicking `Add New Webhook to Workspace`. <br/>
 After that you need to copy URL from sample curl. <br />
@@ -54,7 +54,7 @@ https://hooks.slack.com/services/aaa/bbb/ccc
 ## How get GH_ACCESS_TOKEN
 
 If our repos are private we cannot use GITHUB_TOKEN from github actions env, so we need to create own token. <br/>
-At first, you need visit `https://github.com/settings/tokens`. <br/>
+At first, you need visit the [LINK](https://github.com/settings/tokens). <br/>
 Then you need to generate new token. <br/>
 So you need to name it and give particular permissions. <br/>
 In our case `repo` or `Full control of private repositories` will be enough. <br />
