@@ -3,22 +3,6 @@ import RCBot from './rc-bot'
 import SlackBotService from './services/slackbot-service'
 import GithubService from './services/github-service'
 
-describe('GithubService', () => {
-  it('throw an error if accessToken is empty', () => {
-    expect(() => {
-      new GithubService('')
-    }).toThrow('accessToken is empty :(')
-  })
-})
-
-describe('SlackBotService', () => {
-  it('throw an error if webHookURL is empty', () => {
-    expect(() => {
-      new SlackBotService('')
-    }).toThrow('webHookURL is empty :(')
-  })
-})
-
 describe('RCBot', () => {
   let rcBot: RCBot
   let slackBotService: SlackBotService

@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 const fs = require('fs')
 
-function checkEnvExistsLocally() {
+function envFileVerification() {
   if (!fs.existsSync('.env')) {
     console.error('-------')
     console.error('-------')
@@ -12,8 +12,4 @@ function checkEnvExistsLocally() {
   }
 }
 
-function localValidation() {
-  checkEnvExistsLocally()
-}
-
-localValidation()
+envFileVerification()
