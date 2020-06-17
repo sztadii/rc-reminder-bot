@@ -30,6 +30,47 @@ describe('RCBot', () => {
     jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => secondCompare)
   }
 
+  it('call githubService with arguments passed as a config', async () => {
+    const allRepos = [{ name: 'typescript', owner: { login: 'Github' } }]
+
+    const firstBranchDiff = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Batman'
+            }
+          }
+        ]
+      }
+    }
+
+    mockAllValues(allRepos, firstBranchDiff)
+
+    rcBot = new RCBot(
+      {
+        organization: 'Github',
+        baseBranch: 'replica',
+        headBranch: 'main'
+      },
+      githubService,
+      slackBotService
+    )
+    await rcBot.checkBranches()
+
+    expect(githubService.getAllOrganizationRepos).toHaveBeenCalledTimes(1)
+    expect(githubService.getAllOrganizationRepos).toHaveBeenCalledWith('Github')
+
+    expect(githubService.compareTwoBranches).toHaveBeenCalledTimes(1)
+    expect(githubService.compareTwoBranches).toHaveBeenCalledWith({
+      base: 'replica',
+      head: 'main',
+      owner: 'Github',
+      repo: 'typescript'
+    })
+  })
+
   it('send message to the slack channel about not updated repositories', async () => {
     const allRepos = [
       { name: 'react', owner: { login: 'facebook' } },
