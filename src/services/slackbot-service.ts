@@ -10,8 +10,11 @@ export default class SlackBotService {
   async postMessageToReminderChannel(message: string): Promise<void> {
     const wrappedMessage = '```' + message + '```'
 
+    console.log('Sending the message to the channel \n')
+    console.log(message)
+
     if (process.env.NODE_ENV !== 'production') {
-      return console.log({ text: wrappedMessage })
+      return
     }
 
     await axios.post(this.webHookURL, { text: wrappedMessage })
