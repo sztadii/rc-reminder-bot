@@ -20,6 +20,8 @@ export default class GithubService {
     let currentData = []
 
     for (let i = 1; i === 1 || currentData.length > 0; i++) {
+      console.log(`Fetching repos from page nr ${i}`)
+
       const { data: repos } = await this.githubService.repos.listForOrg({
         org: organization,
         page: i,
@@ -28,6 +30,8 @@ export default class GithubService {
       currentData = repos
       allRepos.push(...repos)
     }
+
+    console.log(`Fetched ${allRepos.length} repos \n`)
 
     return allRepos
   }

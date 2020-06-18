@@ -30,6 +30,8 @@ export default class RCBot {
   }
 
   async checkBranches(): Promise<void> {
+    console.log('\nStart running checkBranches script \n')
+
     try {
       const allOrganizationRepos = await this.githubService.getAllOrganizationRepos(
         this.config.organization
