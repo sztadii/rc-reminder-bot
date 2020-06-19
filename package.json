@@ -14,6 +14,7 @@
     "exec-ci": "NODE_ENV=production node dist/index.js",
     "format": "prettier --ignore-path .gitignore --write '**/*.{ts,md,json}'",
     "lint": "eslint './src/**/*.ts' --ext='.ts' --ignore-path .gitignore --color --max-warnings 0 --fix",
+    "lint-names": "file-naming-enforcer type=kebabCase folder=./src",
     "test-watch": "jest --silent --watch",
     "test": "jest --silent"
   },
@@ -39,6 +40,7 @@
     "babel-jest": "^26.0.1",
     "eslint": "^7.2.0",
     "eslint-plugin-jest": "^23.13.2",
+    "file-naming-enforcer": "^1.1.6",
     "husky": "^4.2.5",
     "jest": "^26.0.1",
     "lint-staged": "^10.2.10",
