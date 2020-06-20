@@ -17,9 +17,9 @@ export default class GithubService {
 
   async getAllOrganizationRepos(organization: string): Promise<ReposListForOrgResponseData> {
     const allRepos = []
-    let currentData = []
+    let canFetchMoreData = true
 
-    for (let i = 1; i === 1 || currentData.length > 0; i++) {
+    for (let i = 1; canFetchMoreData; i++) {
       console.log(`Fetching repos from page nr ${i}`)
 
       const { data: repos } = await this.githubService.repos.listForOrg({
@@ -27,7 +27,7 @@ export default class GithubService {
         page: i,
         per_page: 100 // GITHUB API is not allowing to fetch more that 100
       })
-      currentData = repos
+      canFetchMoreData = !!repos.length
       allRepos.push(...repos)
     }
 
