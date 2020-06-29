@@ -18,7 +18,7 @@ I hope this bot will solve it, cause it will be reminding about that changes on 
 At first, we need to create a new workflow. <br />
 So please create a file inside .github/workflows folder. <br />
 For example: `.github/workflow/daily-job.yml` <br />
-And content should look like that: <br />
+The file content should look similar to below example, but feel free to use own.
 
 ```
 name: Daily job
@@ -33,9 +33,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
       - name: Trigger script to send proper slack message
-        uses: ./
+        uses: sztadii/rc-reminder-bot@1
         with:
           ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
           BASE_BRANCH: develop

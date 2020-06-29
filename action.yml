@@ -3,7 +3,7 @@ description: 'A simple bot that reminds forgetful developers of merging quick fi
 author: 'sztadii'
 branding:
   icon: bell
-  color: red
+  color: gray-dark
 inputs:
   ORGANIZATION_NAME:
     description: 'Name of organization'
