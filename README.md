@@ -13,30 +13,35 @@ When you are making a lot of deployments to production with a lot of minor fixes
 cause a lot of time you will be spending on resolving conflicts. <br />
 I hope this bot will solve it, cause it will be reminding about that changes on a slack channel.
 
-## Requirements:
+## How to use:
 
-- NodeJS ( min 12.14.1 ) for app serving and other development process
-
-## Before you will start
-
-Please copy `.env.example` into `.env` file and fill with correct data
-
-## How to run our application ( in development mode )
-
-At first please install NodeJS on your machine, after that please run below commands:
+At first, we need to create a new workflow.
+So please create a file inside .github/workflows folder
+For example: `.github/workflow/daily-job.yml`
+And content should look like that:
 
 ```
-npm ci
-npm start
-```
+name: Daily job
 
-## How to run our application ( in production mode )
+on:
+  schedule:
+    # To set specific time please check https://crontab.guru
+    - cron:  '0 6 * * *'
 
-At first please install NodeJS on your machine, after that please run below commands:
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
 
-```
-npm ci
-npm run start-prod
+    steps:
+      - uses: actions/checkout@v2
+      - name: Trigger script to send proper slack message
+        uses: ./
+        with:
+          ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
+          BASE_BRANCH: develop
+          HEAD_BRANCH: master
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
 ```
 
 ## How get SLACK_CHANNEL_WEBHOOK_URL
@@ -64,11 +69,29 @@ And should look similar to:
 aaa-bbb-ccc-ddd-eee-fff
 ```
 
-## How to run it via Github workflow cron
+## Development / contribution requirements:
 
-At first, you need to update env variables in `daily-job.yml`. <br />
-If you need to change time, or the cron you need to specify its value. <br />
-For example:
-`30 4 * * *`
-Means 4:30 UTC time <br />
-For of the work will be done by Github so enjoy the free time :)
+- NodeJS ( min 12.14.1 ) for app serving and other development process
+
+### Before you will start
+
+Please copy `.env.example` into `.env` file and fill with correct data
+In this way we will be able to run our script locally with real data.
+
+### How to run our application ( in development mode )
+
+At first please install NodeJS on your machine, after that please run below commands:
+
+```
+npm ci
+npm run start-dev
+```
+
+### How to run our application ( in production mode )
+
+At first please install NodeJS on your machine, after that please run below commands:
+
+```
+npm ci
+npm run start-prod
+```
