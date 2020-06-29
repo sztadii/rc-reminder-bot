@@ -15,10 +15,10 @@ I hope this bot will solve it, cause it will be reminding about that changes on 
 
 ## How to use:
 
-At first, we need to create a new workflow.
-So please create a file inside .github/workflows folder
-For example: `.github/workflow/daily-job.yml`
-And content should look like that:
+At first, we need to create a new workflow. <br />
+So please create a file inside .github/workflows folder. <br />
+For example: `.github/workflow/daily-job.yml` <br />
+And content should look like that: <br />
 
 ```
 name: Daily job
@@ -75,8 +75,8 @@ aaa-bbb-ccc-ddd-eee-fff
 
 ### Before you will start
 
-Please copy `.env.example` into `.env` file and fill with correct data
-In this way we will be able to run our script locally with real data.
+Please copy `.env.example` into `.env` file and fill with correct data <br />
+In this way we will be able to run our script locally with real data. <br />
 
 ### How to run our application ( in development mode )
 
