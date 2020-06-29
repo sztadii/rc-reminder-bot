@@ -43,6 +43,11 @@ jobs:
           SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
 ```
 
+## Expected result:
+
+Once everything will be set up properly then you should see below message in the slack channel <br /> <br />
+![Screenshot](slack-channel-screenshot.png)
+
 ## How get SLACK_CHANNEL_WEBHOOK_URL
 
 To get SLACK_CHANNEL_WEBHOOK_URL you need to create slack app, so please visit the [LINK](https://api.slack.com/apps?new_app=1). <br/>
