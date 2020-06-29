@@ -1,0 +1,21 @@
+name: 'rc-reminder-bot'
+description: 'A simple bot that reminds forgetful developers of merging quick fixes from rc into develop branch'
+inputs:
+  ORGANIZATION_NAME:
+    description: 'Name of organization'
+    required: true
+  BASE_BRANCH:
+    description: 'Base branch'
+    required: true
+  HEAD_BRANCH:
+    description: 'Head branch'
+    required: true
+  GH_ACCESS_TOKEN:
+    description: 'Private github access token'
+    required: true
+  SLACK_CHANNEL_WEBHOOK_URL:
+    description: 'URL to slack channel webhook'
+    required: true
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

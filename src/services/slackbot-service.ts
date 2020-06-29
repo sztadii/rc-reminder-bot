@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export default class SlackBotService {
-  constructor(private webHookURL: string) {
+  constructor(private webHookURL: string, private isProduction = false) {
     if (!webHookURL?.length) {
       throw new Error('webHookURL is empty :(')
     }
@@ -11,9 +11,9 @@ export default class SlackBotService {
     const wrappedMessage = '```' + message + '```'
 
     console.log('Sending the message to the channel \n')
-    console.log(message)
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (!this.isProduction) {
+      console.log(message)
       return
     }
 
