@@ -1,5 +1,9 @@
 name: 'rc-reminder-bot'
 description: 'A simple bot that reminds forgetful developers of merging quick fixes from rc into develop branch'
+author: 'sztadii'
+branding:
+  icon: bell
+  color: red
 inputs:
   ORGANIZATION_NAME:
     description: 'Name of organization'
