@@ -1,0 +1,17 @@
+name: Test from market
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger script to send proper slack message
+        uses: sztadii/rc-reminder-bot@1
+        with:
+          ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
+          BASE_BRANCH: develop
+          HEAD_BRANCH: master
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
