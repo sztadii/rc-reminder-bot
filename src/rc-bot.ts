@@ -65,10 +65,11 @@ export default class RCBot {
           head: this.config.headBranch
         })
 
-        const { files = [], commits = [] } = compareData.data
+        const { files = [], commits: rawCommits = [] } = compareData.data
 
         if (!files.length) return null
 
+        const commits = rawCommits.filter((commit) => commit.commit.committer.name !== 'Github')
         const allAuthors = commits.map((commit) => commit?.author?.login).filter(Boolean)
         const authors = [...new Set(allAuthors)]
 

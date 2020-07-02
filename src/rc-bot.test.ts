@@ -306,4 +306,64 @@ describe('RCBot', () => {
       )
     }).toThrow('config do not have all required values')
   })
+
+  it('send message to the slack channel about non-merge commits', async () => {
+    const allRepos = [
+      { name: 'react', owner: { login: 'facebook' } },
+      { name: 'typescript', owner: { login: 'microsoft' } }
+    ]
+
+    // This branch should be ignored
+    // cause contains only merge commit made by Github
+    const branchDiffWithOnlyPullRequestCommit = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Iron Man'
+            },
+            commit: {
+              committer: {
+                name: 'Github'
+              }
+            }
+          }
+        ]
+      }
+    }
+
+    const secondBranchDiff = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Hulk'
+            },
+            commit: {
+              committer: {
+                date: moment().subtract(5, 'days')
+              }
+            }
+          }
+        ]
+      }
+    }
+
+    mockAllValues(allRepos, branchDiffWithOnlyPullRequestCommit, secondBranchDiff)
+
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+
+    const expectedMessage =
+      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
+      '-----------------\n' +
+      'Repo: typescript\n' +
+      'Author of not updated commit: Hulk\n' +
+      'Delay: 5 days\n'
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+  })
 })
