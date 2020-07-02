@@ -304,7 +304,7 @@ describe('RCBot', () => {
         new GithubService('aaa'),
         new SlackBotService('aaa')
       )
-    }).toThrow('config do not have all required values')
+    }).toThrow('Config do not have all required values')
   })
 
   it('send message to the slack channel about non-merge commits', async () => {

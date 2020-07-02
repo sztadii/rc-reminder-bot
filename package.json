@@ -56,7 +56,9 @@
   },
   "lint-staged": {
     "*.ts": [
-      "npm run lint"
+      "npm run lint",
+      "npm run build-and-pack",
+      "git add dist"
     ],
     "*.{ts,md,json}": [
       "npm run format"

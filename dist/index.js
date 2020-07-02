@@ -11910,7 +11910,7 @@ class RCBot {
         this.slackBotService = slackBotService;
         const hasAllRequiredValues = config.organization.length && config.headBranch.length && config.baseBranch.length;
         if (!hasAllRequiredValues) {
-            throw new Error('config do not have all required values');
+            throw new Error('Config do not have all required values');
         }
     }
     checkBranches() {
@@ -11944,9 +11944,10 @@ class RCBot {
                         base: this.config.baseBranch,
                         head: this.config.headBranch
                     });
-                    const { files = [], commits = [] } = compareData.data;
+                    const { files = [], commits: rawCommits = [] } = compareData.data;
                     if (!files.length)
                         return null;
+                    const commits = rawCommits.filter((commit) => commit.commit.committer.name !== 'Github');
                     const allAuthors = commits.map((commit) => { var _a; return (_a = commit === null || commit === void 0 ? void 0 : commit.author) === null || _a === void 0 ? void 0 : _a.login; }).filter(Boolean);
                     const authors = [...new Set(allAuthors)];
                     const current = moment_1.default();

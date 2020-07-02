@@ -25,7 +25,7 @@ export default class RCBot {
     const hasAllRequiredValues =
       config.organization.length && config.headBranch.length && config.baseBranch.length
     if (!hasAllRequiredValues) {
-      throw new Error('config do not have all required values')
+      throw new Error('Config do not have all required values')
     }
   }
 
