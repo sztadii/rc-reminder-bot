@@ -42,7 +42,7 @@
     "babel-jest": "^26.0.1",
     "eslint": "^7.2.0",
     "eslint-plugin-jest": "^23.13.2",
-    "file-naming-enforcer": "^1.1.6",
+    "file-naming-enforcer": "^1.1.7",
     "husky": "^4.2.5",
     "jest": "^26.0.1",
     "lint-staged": "^10.2.10",
