@@ -22,10 +22,20 @@ export default class RCBot {
     private githubService: GithubService,
     private slackBotService: SlackBotService
   ) {
-    const hasAllRequiredValues =
-      config.organization.length && config.headBranch.length && config.baseBranch.length
-    if (!hasAllRequiredValues) {
-      throw new Error('Config do not have all required values')
+    this.configRuntimeValidation(config)
+  }
+
+  configRuntimeValidation(config: RCBotConfig): void {
+    if (!config.organization.length) {
+      throw new Error('organization is empty :(')
+    }
+
+    if (!config.headBranch.length) {
+      throw new Error('headBranch is empty :(')
+    }
+
+    if (!config.baseBranch.length) {
+      throw new Error('baseBranch is empty :(')
     }
   }
 

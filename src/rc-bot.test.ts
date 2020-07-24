@@ -304,7 +304,31 @@ describe('RCBot', () => {
         new GithubService('aaa'),
         new SlackBotService('aaa')
       )
-    }).toThrow('Config do not have all required values')
+    }).toThrow('organization is empty :(')
+
+    expect(() => {
+      rcBot = new RCBot(
+        {
+          organization: 'facebook',
+          baseBranch: '',
+          headBranch: 'master'
+        },
+        new GithubService('aaa'),
+        new SlackBotService('aaa')
+      )
+    }).toThrow('baseBranch is empty :(')
+
+    expect(() => {
+      rcBot = new RCBot(
+        {
+          organization: 'facebook',
+          baseBranch: 'develop',
+          headBranch: ''
+        },
+        new GithubService('aaa'),
+        new SlackBotService('aaa')
+      )
+    }).toThrow('headBranch is empty :(')
   })
 
   it('send message to the slack channel about non-merge commits', async () => {
