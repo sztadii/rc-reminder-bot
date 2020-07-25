@@ -25,7 +25,7 @@ export default class RCBot {
     this.validateConfigValues(config)
   }
 
-  validateConfigValues(config: RCBotConfig): void {
+  private validateConfigValues(config: RCBotConfig): void {
     if (!config.organization.length) {
       throw new Error('organization is empty :(')
     }
@@ -39,7 +39,7 @@ export default class RCBot {
     }
   }
 
-  async checkBranches(): Promise<void> {
+  public async checkBranches(): Promise<void> {
     console.log('\nStart running checkBranches script \n')
 
     try {
@@ -63,7 +63,9 @@ export default class RCBot {
     }
   }
 
-  async getInfosFromAffectedBranches(repos: ReposListForOrgResponseData): Promise<RepoInfo[]> {
+  private async getInfosFromAffectedBranches(
+    repos: ReposListForOrgResponseData
+  ): Promise<RepoInfo[]> {
     const allBranchesResponses = repos.map(async (repo) => {
       if (repo.archived) return null
 
@@ -102,7 +104,7 @@ export default class RCBot {
     return allBranchesInfos.filter(Boolean)
   }
 
-  getReminderMessage(repos: RepoInfo[]): string {
+  private getReminderMessage(repos: RepoInfo[]): string {
     let message =
       'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
       `PLEASE MERGE ${this.config.headBranch.toUpperCase()} TO ${this.config.baseBranch.toUpperCase()} BRANCH.\n`
