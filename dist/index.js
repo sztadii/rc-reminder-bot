@@ -51,161 +51,6 @@ module.exports =
 /************************************************************************/
 /******/ ({
 
-/***/ 2:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const os = __webpack_require__(87);
-const macosRelease = __webpack_require__(118);
-const winRelease = __webpack_require__(49);
-
-const osName = (platform, release) => {
-	if (!platform && release) {
-		throw new Error('You can\'t specify a `release` without specifying `platform`');
-	}
-
-	platform = platform || os.platform();
-
-	let id;
-
-	if (platform === 'darwin') {
-		if (!release && os.platform() === 'darwin') {
-			release = os.release();
-		}
-
-		const prefix = release ? (Number(release.split('.')[0]) > 15 ? 'macOS' : 'OS X') : 'macOS';
-		id = release ? macosRelease(release).name : '';
-		return prefix + (id ? ' ' + id : '');
-	}
-
-	if (platform === 'linux') {
-		if (!release && os.platform() === 'linux') {
-			release = os.release();
-		}
-
-		id = release ? release.replace(/^(\d+\.\d+).*/, '$1') : '';
-		return 'Linux' + (id ? ' ' + id : '');
-	}
-
-	if (platform === 'win32') {
-		if (!release && os.platform() === 'win32') {
-			release = os.release();
-		}
-
-		id = release ? winRelease(release) : '';
-		return 'Windows' + (id ? ' ' + id : '');
-	}
-
-	return platform;
-};
-
-module.exports = osName;
-
-
-/***/ }),
-
-/***/ 9:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var once = __webpack_require__(969);
-
-var noop = function() {};
-
-var isRequest = function(stream) {
-	return stream.setHeader && typeof stream.abort === 'function';
-};
-
-var isChildProcess = function(stream) {
-	return stream.stdio && Array.isArray(stream.stdio) && stream.stdio.length === 3
-};
-
-var eos = function(stream, opts, callback) {
-	if (typeof opts === 'function') return eos(stream, null, opts);
-	if (!opts) opts = {};
-
-	callback = once(callback || noop);
-
-	var ws = stream._writableState;
-	var rs = stream._readableState;
-	var readable = opts.readable || (opts.readable !== false && stream.readable);
-	var writable = opts.writable || (opts.writable !== false && stream.writable);
-	var cancelled = false;
-
-	var onlegacyfinish = function() {
-		if (!stream.writable) onfinish();
-	};
-
-	var onfinish = function() {
-		writable = false;
-		if (!readable) callback.call(stream);
-	};
-
-	var onend = function() {
-		readable = false;
-		if (!writable) callback.call(stream);
-	};
-
-	var onexit = function(exitCode) {
-		callback.call(stream, exitCode ? new Error('exited with error code: ' + exitCode) : null);
-	};
-
-	var onerror = function(err) {
-		callback.call(stream, err);
-	};
-
-	var onclose = function() {
-		process.nextTick(onclosenexttick);
-	};
-
-	var onclosenexttick = function() {
-		if (cancelled) return;
-		if (readable && !(rs && (rs.ended && !rs.destroyed))) return callback.call(stream, new Error('premature close'));
-		if (writable && !(ws && (ws.ended && !ws.destroyed))) return callback.call(stream, new Error('premature close'));
-	};
-
-	var onrequest = function() {
-		stream.req.on('finish', onfinish);
-	};
-
-	if (isRequest(stream)) {
-		stream.on('complete', onfinish);
-		stream.on('abort', onclose);
-		if (stream.req) onrequest();
-		else stream.on('request', onrequest);
-	} else if (writable && !ws) { // legacy streams
-		stream.on('end', onlegacyfinish);
-		stream.on('close', onlegacyfinish);
-	}
-
-	if (isChildProcess(stream)) stream.on('exit', onexit);
-
-	stream.on('end', onend);
-	stream.on('finish', onfinish);
-	if (opts.error !== false) stream.on('error', onerror);
-	stream.on('close', onclose);
-
-	return function() {
-		cancelled = true;
-		stream.removeListener('complete', onfinish);
-		stream.removeListener('abort', onclose);
-		stream.removeListener('request', onrequest);
-		if (stream.req) stream.req.removeListener('finish', onfinish);
-		stream.removeListener('end', onlegacyfinish);
-		stream.removeListener('close', onlegacyfinish);
-		stream.removeListener('finish', onfinish);
-		stream.removeListener('exit', onexit);
-		stream.removeListener('end', onend);
-		stream.removeListener('error', onerror);
-		stream.removeListener('close', onclose);
-	};
-};
-
-module.exports = eos;
-
-
-/***/ }),
-
 /***/ 11:
 /***/ (function(module) {
 
@@ -250,53 +95,6 @@ function wrappy (fn, cb) {
 /***/ (function(module) {
 
 module.exports = eval("require")("encoding");
-
-
-/***/ }),
-
-/***/ 20:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-
-const cp = __webpack_require__(129);
-const parse = __webpack_require__(568);
-const enoent = __webpack_require__(881);
-
-function spawn(command, args, options) {
-    // Parse the arguments
-    const parsed = parse(command, args, options);
-
-    // Spawn the child process
-    const spawned = cp.spawn(parsed.command, parsed.args, parsed.options);
-
-    // Hook into child process "exit" event to emit an error if the command
-    // does not exists, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
-    enoent.hookChildProcess(spawned, parsed);
-
-    return spawned;
-}
-
-function spawnSync(command, args, options) {
-    // Parse the arguments
-    const parsed = parse(command, args, options);
-
-    // Spawn the child process
-    const result = cp.spawnSync(parsed.command, parsed.args, parsed.options);
-
-    // Analyze if the command does not exist, see: https://github.com/IndigoUnited/node-cross-spawn/issues/16
-    result.error = result.error || enoent.verifyENOENTSync(result.status, parsed);
-
-    return result;
-}
-
-module.exports = spawn;
-module.exports.spawn = spawn;
-module.exports.sync = spawnSync;
-
-module.exports._parse = parse;
-module.exports._enoent = enoent;
 
 
 /***/ }),
@@ -870,86 +668,51 @@ module.exports = {
 
 /***/ }),
 
-/***/ 39:
-/***/ (function(module) {
-
-"use strict";
-
-
-const pathKey = (options = {}) => {
-	const environment = options.env || process.env;
-	const platform = options.platform || process.platform;
-
-	if (platform !== 'win32') {
-		return 'PATH';
-	}
-
-	return Object.keys(environment).reverse().find(key => key.toUpperCase() === 'PATH') || 'Path';
-};
-
-module.exports = pathKey;
-// TODO: Remove this for the next major release
-module.exports.default = pathKey;
-
-
-/***/ }),
-
 /***/ 49:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
-"use strict";
+var wrappy = __webpack_require__(11)
+module.exports = wrappy(once)
+module.exports.strict = wrappy(onceStrict)
 
-const os = __webpack_require__(87);
-const execa = __webpack_require__(675);
+once.proto = once(function () {
+  Object.defineProperty(Function.prototype, 'once', {
+    value: function () {
+      return once(this)
+    },
+    configurable: true
+  })
 
-// Reference: https://www.gaijin.at/en/lstwinver.php
-const names = new Map([
-	['10.0', '10'],
-	['6.3', '8.1'],
-	['6.2', '8'],
-	['6.1', '7'],
-	['6.0', 'Vista'],
-	['5.2', 'Server 2003'],
-	['5.1', 'XP'],
-	['5.0', '2000'],
-	['4.9', 'ME'],
-	['4.1', '98'],
-	['4.0', '95']
-]);
+  Object.defineProperty(Function.prototype, 'onceStrict', {
+    value: function () {
+      return onceStrict(this)
+    },
+    configurable: true
+  })
+})
 
-const windowsRelease = release => {
-	const version = /\d+\.\d/.exec(release || os.release());
+function once (fn) {
+  var f = function () {
+    if (f.called) return f.value
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  f.called = false
+  return f
+}
 
-	if (release && !version) {
-		throw new Error('`release` argument doesn\'t match `n.n`');
-	}
-
-	const ver = (version || [])[0];
-
-	// Server 2008, 2012, 2016, and 2019 versions are ambiguous with desktop versions and must be detected at runtime.
-	// If `release` is omitted or we're on a Windows system, and the version number is an ambiguous version
-	// then use `wmic` to get the OS caption: https://msdn.microsoft.com/en-us/library/aa394531(v=vs.85).aspx
-	// If `wmic` is obsoloete (later versions of Windows 10), use PowerShell instead.
-	// If the resulting caption contains the year 2008, 2012, 2016 or 2019, it is a server version, so return a server OS name.
-	if ((!release || release === os.release()) && ['6.1', '6.2', '6.3', '10.0'].includes(ver)) {
-		let stdout;
-		try {
-			stdout = execa.sync('wmic', ['os', 'get', 'Caption']).stdout || '';
-		} catch (_) {
-			stdout = execa.sync('powershell', ['(Get-CimInstance -ClassName Win32_OperatingSystem).caption']).stdout || '';
-		}
-
-		const year = (stdout.match(/2008|2012|2016|2019/) || [])[0];
-
-		if (year) {
-			return `Server ${year}`;
-		}
-	}
-
-	return names.get(ver);
-};
-
-module.exports = windowsRelease;
+function onceStrict (fn) {
+  var f = function () {
+    if (f.called)
+      throw new Error(f.onceError)
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  var name = fn.name || 'Function wrapped with `once`'
+  f.onceError = name + " shouldn't be called more than once"
+  f.called = false
+  return f
+}
 
 
 /***/ }),
@@ -1161,46 +924,6 @@ module.exports = require("os");
 
 /***/ }),
 
-/***/ 118:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const os = __webpack_require__(87);
-
-const nameMap = new Map([
-	[19, 'Catalina'],
-	[18, 'Mojave'],
-	[17, 'High Sierra'],
-	[16, 'Sierra'],
-	[15, 'El Capitan'],
-	[14, 'Yosemite'],
-	[13, 'Mavericks'],
-	[12, 'Mountain Lion'],
-	[11, 'Lion'],
-	[10, 'Snow Leopard'],
-	[9, 'Leopard'],
-	[8, 'Tiger'],
-	[7, 'Panther'],
-	[6, 'Jaguar'],
-	[5, 'Puma']
-]);
-
-const macosRelease = release => {
-	release = Number((release || os.release()).split('.')[0]);
-	return {
-		name: nameMap.get(release),
-		version: '10.' + (release - 4)
-	};
-};
-
-module.exports = macosRelease;
-// TODO: remove this in the next major version
-module.exports.default = macosRelease;
-
-
-/***/ }),
-
 /***/ 124:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -1242,13 +965,6 @@ class SlackBotService {
 }
 exports.default = SlackBotService;
 //# sourceMappingURL=slackbot-service.js.map
-
-/***/ }),
-
-/***/ 129:
-/***/ (function(module) {
-
-module.exports = require("child_process");
 
 /***/ }),
 
@@ -1387,103 +1103,6 @@ CancelToken.source = function source() {
 };
 
 module.exports = CancelToken;
-
-
-/***/ }),
-
-/***/ 151:
-/***/ (function(module) {
-
-"use strict";
-
-const alias = ['stdin', 'stdout', 'stderr'];
-
-const hasAlias = opts => alias.some(x => Boolean(opts[x]));
-
-module.exports = opts => {
-	if (!opts) {
-		return null;
-	}
-
-	if (opts.stdio && hasAlias(opts)) {
-		throw new Error(`It's not possible to provide \`stdio\` in combination with one of ${alias.map(x => `\`${x}\``).join(', ')}`);
-	}
-
-	if (typeof opts.stdio === 'string') {
-		return opts.stdio;
-	}
-
-	const stdio = opts.stdio || [];
-
-	if (!Array.isArray(stdio)) {
-		throw new TypeError(`Expected \`stdio\` to be of type \`string\` or \`Array\`, got \`${typeof stdio}\``);
-	}
-
-	const result = [];
-	const len = Math.max(stdio.length, alias.length);
-
-	for (let i = 0; i < len; i++) {
-		let value = null;
-
-		if (stdio[i] !== undefined) {
-			value = stdio[i];
-		} else if (opts[alias[i]] !== undefined) {
-			value = opts[alias[i]];
-		}
-
-		result[i] = value;
-	}
-
-	return result;
-};
-
-
-/***/ }),
-
-/***/ 197:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-module.exports = isexe
-isexe.sync = sync
-
-var fs = __webpack_require__(747)
-
-function isexe (path, options, cb) {
-  fs.stat(path, function (er, stat) {
-    cb(er, er ? false : checkStat(stat, options))
-  })
-}
-
-function sync (path, options) {
-  return checkStat(fs.statSync(path), options)
-}
-
-function checkStat (stat, options) {
-  return stat.isFile() && checkMode(stat, options)
-}
-
-function checkMode (stat, options) {
-  var mod = stat.mode
-  var uid = stat.uid
-  var gid = stat.gid
-
-  var myUid = options.uid !== undefined ?
-    options.uid : process.getuid && process.getuid()
-  var myGid = options.gid !== undefined ?
-    options.gid : process.getgid && process.getgid()
-
-  var u = parseInt('100', 8)
-  var g = parseInt('010', 8)
-  var o = parseInt('001', 8)
-  var ug = u | g
-
-  var ret = (mod & o) ||
-    (mod & g) && gid === myGid ||
-    (mod & u) && uid === myUid ||
-    (mod & ug) && myUid === 0
-
-  return ret
-}
 
 
 /***/ }),
@@ -1812,176 +1431,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ 260:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-// Note: since nyc uses this module to output coverage, any lines
-// that are in the direct sync flow of nyc's outputCoverage are
-// ignored, since we can never get coverage for them.
-var assert = __webpack_require__(357)
-var signals = __webpack_require__(654)
-var isWin = /^win/i.test(process.platform)
-
-var EE = __webpack_require__(614)
-/* istanbul ignore if */
-if (typeof EE !== 'function') {
-  EE = EE.EventEmitter
-}
-
-var emitter
-if (process.__signal_exit_emitter__) {
-  emitter = process.__signal_exit_emitter__
-} else {
-  emitter = process.__signal_exit_emitter__ = new EE()
-  emitter.count = 0
-  emitter.emitted = {}
-}
-
-// Because this emitter is a global, we have to check to see if a
-// previous version of this library failed to enable infinite listeners.
-// I know what you're about to say.  But literally everything about
-// signal-exit is a compromise with evil.  Get used to it.
-if (!emitter.infinite) {
-  emitter.setMaxListeners(Infinity)
-  emitter.infinite = true
-}
-
-module.exports = function (cb, opts) {
-  assert.equal(typeof cb, 'function', 'a callback must be provided for exit handler')
-
-  if (loaded === false) {
-    load()
-  }
-
-  var ev = 'exit'
-  if (opts && opts.alwaysLast) {
-    ev = 'afterexit'
-  }
-
-  var remove = function () {
-    emitter.removeListener(ev, cb)
-    if (emitter.listeners('exit').length === 0 &&
-        emitter.listeners('afterexit').length === 0) {
-      unload()
-    }
-  }
-  emitter.on(ev, cb)
-
-  return remove
-}
-
-module.exports.unload = unload
-function unload () {
-  if (!loaded) {
-    return
-  }
-  loaded = false
-
-  signals.forEach(function (sig) {
-    try {
-      process.removeListener(sig, sigListeners[sig])
-    } catch (er) {}
-  })
-  process.emit = originalProcessEmit
-  process.reallyExit = originalProcessReallyExit
-  emitter.count -= 1
-}
-
-function emit (event, code, signal) {
-  if (emitter.emitted[event]) {
-    return
-  }
-  emitter.emitted[event] = true
-  emitter.emit(event, code, signal)
-}
-
-// { <signal>: <listener fn>, ... }
-var sigListeners = {}
-signals.forEach(function (sig) {
-  sigListeners[sig] = function listener () {
-    // If there are no other listeners, an exit is coming!
-    // Simplest way: remove us and then re-send the signal.
-    // We know that this will kill the process, so we can
-    // safely emit now.
-    var listeners = process.listeners(sig)
-    if (listeners.length === emitter.count) {
-      unload()
-      emit('exit', null, sig)
-      /* istanbul ignore next */
-      emit('afterexit', null, sig)
-      /* istanbul ignore next */
-      if (isWin && sig === 'SIGHUP') {
-        // "SIGHUP" throws an `ENOSYS` error on Windows,
-        // so use a supported signal instead
-        sig = 'SIGINT'
-      }
-      process.kill(process.pid, sig)
-    }
-  }
-})
-
-module.exports.signals = function () {
-  return signals
-}
-
-module.exports.load = load
-
-var loaded = false
-
-function load () {
-  if (loaded) {
-    return
-  }
-  loaded = true
-
-  // This is the number of onSignalExit's that are in play.
-  // It's important so that we can count the correct number of
-  // listeners on signals, and don't wait for the other one to
-  // handle it instead of us.
-  emitter.count += 1
-
-  signals = signals.filter(function (sig) {
-    try {
-      process.on(sig, sigListeners[sig])
-      return true
-    } catch (er) {
-      return false
-    }
-  })
-
-  process.emit = processEmit
-  process.reallyExit = processReallyExit
-}
-
-var originalProcessReallyExit = process.reallyExit
-function processReallyExit (code) {
-  process.exitCode = code || 0
-  emit('exit', process.exitCode, null)
-  /* istanbul ignore next */
-  emit('afterexit', process.exitCode, null)
-  /* istanbul ignore next */
-  originalProcessReallyExit.call(process, process.exitCode)
-}
-
-var originalProcessEmit = process.emit
-function processEmit (ev, arg) {
-  if (ev === 'exit') {
-    if (arg !== undefined) {
-      process.exitCode = arg
-    }
-    var ret = originalProcessEmit.apply(this, arguments)
-    emit('exit', process.exitCode, null)
-    /* istanbul ignore next */
-    emit('afterexit', process.exitCode, null)
-    return ret
-  } else {
-    return originalProcessEmit.apply(this, arguments)
-  }
-}
-
-
-/***/ }),
-
 /***/ 280:
 /***/ (function(module) {
 
@@ -2085,7 +1534,7 @@ module.exports = InterceptorManager;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-const VERSION = "2.2.2";
+const VERSION = "2.2.4";
 
 /**
  * Some “list” response that can be paginated have a different response structure
@@ -2695,7 +2144,7 @@ function withDefaults(oldDefaults, newDefaults) {
   });
 }
 
-const VERSION = "6.0.3";
+const VERSION = "6.0.5";
 
 const userAgent = `octokit-endpoint.js/${VERSION} ${universalUserAgent.getUserAgent()}`; // DEFAULTS has all properties set that EndpointOptions has, except url.
 // So we use RequestParameters and add method as additional required property.
@@ -2717,84 +2166,6 @@ const endpoint = withDefaults(null, DEFAULTS);
 
 exports.endpoint = endpoint;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 389:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-
-const fs = __webpack_require__(747);
-const shebangCommand = __webpack_require__(866);
-
-function readShebang(command) {
-    // Read the first 150 bytes from the file
-    const size = 150;
-    const buffer = Buffer.alloc(size);
-
-    let fd;
-
-    try {
-        fd = fs.openSync(command, 'r');
-        fs.readSync(fd, buffer, 0, size, 0);
-        fs.closeSync(fd);
-    } catch (e) { /* Empty */ }
-
-    // Attempt to extract shebang (null is returned if not a shebang)
-    return shebangCommand(buffer.toString());
-}
-
-module.exports = readShebang;
-
-
-/***/ }),
-
-/***/ 406:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const path = __webpack_require__(622);
-const pathKey = __webpack_require__(829);
-
-module.exports = opts => {
-	opts = Object.assign({
-		cwd: process.cwd(),
-		path: process.env[pathKey()]
-	}, opts);
-
-	let prev;
-	let pth = path.resolve(opts.cwd);
-	const ret = [];
-
-	while (prev !== pth) {
-		ret.push(path.join(pth, 'node_modules/.bin'));
-		prev = pth;
-		pth = path.resolve(pth, '..');
-	}
-
-	// ensure the running `node` binary is used
-	ret.push(path.dirname(process.execPath));
-
-	return ret.concat(opts.path).join(path.delimiter);
-};
-
-module.exports.env = opts => {
-	opts = Object.assign({
-		env: process.env
-	}, opts);
-
-	const env = Object.assign({}, opts.env);
-	const path = pathKey({env});
-
-	opts.path = env[path];
-	env[path] = module.exports(opts);
-
-	return env;
-};
 
 
 /***/ }),
@@ -2823,53 +2194,6 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 /***/ (function(module) {
 
 module.exports = require("stream");
-
-/***/ }),
-
-/***/ 418:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-// Older verions of Node.js might not have `util.getSystemErrorName()`.
-// In that case, fall back to a deprecated internal.
-const util = __webpack_require__(669);
-
-let uv;
-
-if (typeof util.getSystemErrorName === 'function') {
-	module.exports = util.getSystemErrorName;
-} else {
-	try {
-		uv = process.binding('uv');
-
-		if (typeof uv.errname !== 'function') {
-			throw new TypeError('uv.errname is not a function');
-		}
-	} catch (err) {
-		console.error('execa/lib/errname: unable to establish process.binding(\'uv\')', err);
-		uv = null;
-	}
-
-	module.exports = code => errname(uv, code);
-}
-
-// Used for testing the fallback behavior
-module.exports.__test__ = errname;
-
-function errname(uv, code) {
-	if (uv) {
-		return uv.errname(code);
-	}
-
-	if (!(code < 0)) {
-		throw new Error('err >= 0');
-	}
-
-	return `Unknown system error ${code}`;
-}
-
-
 
 /***/ }),
 
@@ -3035,7 +2359,7 @@ function _objectSpread2(target) {
   return target;
 }
 
-const VERSION = "3.0.0";
+const VERSION = "3.1.1";
 
 class Octokit {
   constructor(options = {}) {
@@ -3116,6 +2440,12 @@ class Octokit {
     const OctokitWithDefaults = class extends this {
       constructor(...args) {
         const options = args[0] || {};
+
+        if (typeof defaults === "function") {
+          super(defaults(options));
+          return;
+        }
+
         super(Object.assign({}, defaults, options, options.userAgent && defaults.userAgent ? {
           userAgent: `${options.userAgent} ${defaults.userAgent}`
         } : null));
@@ -3146,95 +2476,6 @@ Octokit.plugins = [];
 
 exports.Octokit = Octokit;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 453:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var once = __webpack_require__(969)
-var eos = __webpack_require__(9)
-var fs = __webpack_require__(747) // we only need fs to get the ReadStream and WriteStream prototypes
-
-var noop = function () {}
-var ancient = /^v?\.0/.test(process.version)
-
-var isFn = function (fn) {
-  return typeof fn === 'function'
-}
-
-var isFS = function (stream) {
-  if (!ancient) return false // newer node version do not need to care about fs is a special way
-  if (!fs) return false // browser
-  return (stream instanceof (fs.ReadStream || noop) || stream instanceof (fs.WriteStream || noop)) && isFn(stream.close)
-}
-
-var isRequest = function (stream) {
-  return stream.setHeader && isFn(stream.abort)
-}
-
-var destroyer = function (stream, reading, writing, callback) {
-  callback = once(callback)
-
-  var closed = false
-  stream.on('close', function () {
-    closed = true
-  })
-
-  eos(stream, {readable: reading, writable: writing}, function (err) {
-    if (err) return callback(err)
-    closed = true
-    callback()
-  })
-
-  var destroyed = false
-  return function (err) {
-    if (closed) return
-    if (destroyed) return
-    destroyed = true
-
-    if (isFS(stream)) return stream.close(noop) // use close for fs streams to avoid fd leaks
-    if (isRequest(stream)) return stream.abort() // request.destroy just do .end - .abort is what we want
-
-    if (isFn(stream.destroy)) return stream.destroy()
-
-    callback(err || new Error('stream was destroyed'))
-  }
-}
-
-var call = function (fn) {
-  fn()
-}
-
-var pipe = function (from, to) {
-  return from.pipe(to)
-}
-
-var pump = function () {
-  var streams = Array.prototype.slice.call(arguments)
-  var callback = isFn(streams[streams.length - 1] || noop) && streams.pop() || noop
-
-  if (Array.isArray(streams[0])) streams = streams[0]
-  if (streams.length < 2) throw new Error('pump requires two streams per minimum')
-
-  var error
-  var destroys = streams.map(function (stream, i) {
-    var reading = i < streams.length - 1
-    var writing = i > 0
-    return destroyer(stream, reading, writing, function (err) {
-      if (!error) error = err
-      if (err) destroys.forEach(call)
-      if (reading) return
-      destroys.forEach(call)
-      callback(error)
-    })
-  })
-
-  return streams.reduce(pipe)
-}
-
-module.exports = pump
 
 
 /***/ }),
@@ -4889,59 +4130,6 @@ exports.FetchError = FetchError;
 
 /***/ }),
 
-/***/ 462:
-/***/ (function(module) {
-
-"use strict";
-
-
-// See http://www.robvanderwoude.com/escapechars.php
-const metaCharsRegExp = /([()\][%!^"`<>&|;, *?])/g;
-
-function escapeCommand(arg) {
-    // Escape meta chars
-    arg = arg.replace(metaCharsRegExp, '^$1');
-
-    return arg;
-}
-
-function escapeArgument(arg, doubleEscapeMetaChars) {
-    // Convert to string
-    arg = `${arg}`;
-
-    // Algorithm below is based on https://qntm.org/cmd
-
-    // Sequence of backslashes followed by a double quote:
-    // double up all the backslashes and escape the double quote
-    arg = arg.replace(/(\\*)"/g, '$1$1\\"');
-
-    // Sequence of backslashes followed by the end of the string
-    // (which will become a double quote later):
-    // double up all the backslashes
-    arg = arg.replace(/(\\*)$/, '$1$1');
-
-    // All other backslashes occur literally
-
-    // Quote the whole thing:
-    arg = `"${arg}"`;
-
-    // Escape meta chars
-    arg = arg.replace(metaCharsRegExp, '^$1');
-
-    // Double escape meta chars if necessary
-    if (doubleEscapeMetaChars) {
-        arg = arg.replace(metaCharsRegExp, '^$1');
-    }
-
-    return arg;
-}
-
-module.exports.command = escapeCommand;
-module.exports.argument = escapeArgument;
-
-
-/***/ }),
-
 /***/ 463:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -4953,7 +4141,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var deprecation = __webpack_require__(692);
-var once = _interopDefault(__webpack_require__(969));
+var once = _interopDefault(__webpack_require__(49));
 
 const logOnce = once(deprecation => console.warn(deprecation));
 /**
@@ -5239,7 +4427,7 @@ exports.getState = getState;
 
 /* module decorator */ module = __webpack_require__.nmd(module);
 //! moment.js
-//! version : 2.26.0
+//! version : 2.27.0
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -10857,7 +10045,7 @@ exports.getState = getState;
 
     //! moment.js
 
-    hooks.version = '2.26.0';
+    hooks.version = '2.27.0';
 
     setHookCallback(createLocal);
 
@@ -10905,66 +10093,6 @@ exports.getState = getState;
     return hooks;
 
 })));
-
-
-/***/ }),
-
-/***/ 489:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-
-const path = __webpack_require__(622);
-const which = __webpack_require__(814);
-const getPathKey = __webpack_require__(39);
-
-function resolveCommandAttempt(parsed, withoutPathExt) {
-    const env = parsed.options.env || process.env;
-    const cwd = process.cwd();
-    const hasCustomCwd = parsed.options.cwd != null;
-    // Worker threads do not have process.chdir()
-    const shouldSwitchCwd = hasCustomCwd && process.chdir !== undefined && !process.chdir.disabled;
-
-    // If a custom `cwd` was specified, we need to change the process cwd
-    // because `which` will do stat calls but does not support a custom cwd
-    if (shouldSwitchCwd) {
-        try {
-            process.chdir(parsed.options.cwd);
-        } catch (err) {
-            /* Empty */
-        }
-    }
-
-    let resolved;
-
-    try {
-        resolved = which.sync(parsed.command, {
-            path: env[getPathKey({ env })],
-            pathExt: withoutPathExt ? path.delimiter : undefined,
-        });
-    } catch (e) {
-        /* Empty */
-    } finally {
-        if (shouldSwitchCwd) {
-            process.chdir(cwd);
-        }
-    }
-
-    // If we successfully resolved, ensure that an absolute path is returned
-    // Note that when a custom `cwd` was used, we need to resolve to an absolute path based on it
-    if (resolved) {
-        resolved = path.resolve(hasCustomCwd ? parsed.options.cwd : '', resolved);
-    }
-
-    return resolved;
-}
-
-function resolveCommand(parsed) {
-    return resolveCommandAttempt(parsed) || resolveCommandAttempt(parsed, true);
-}
-
-module.exports = resolveCommand;
 
 
 /***/ }),
@@ -11027,7 +10155,7 @@ function addHook (state, kind, name, hook) {
 
 var register = __webpack_require__(280)
 var addHook = __webpack_require__(510)
-var removeHook = __webpack_require__(763)
+var removeHook = __webpack_require__(866)
 
 // bind with array of arguments: https://stackoverflow.com/a/21792913
 var bind = Function.bind
@@ -11605,164 +10733,6 @@ module.exports = function settle(resolve, reject, response) {
 
 /***/ }),
 
-/***/ 568:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-
-const path = __webpack_require__(622);
-const resolveCommand = __webpack_require__(489);
-const escape = __webpack_require__(462);
-const readShebang = __webpack_require__(389);
-
-const isWin = process.platform === 'win32';
-const isExecutableRegExp = /\.(?:com|exe)$/i;
-const isCmdShimRegExp = /node_modules[\\/].bin[\\/][^\\/]+\.cmd$/i;
-
-function detectShebang(parsed) {
-    parsed.file = resolveCommand(parsed);
-
-    const shebang = parsed.file && readShebang(parsed.file);
-
-    if (shebang) {
-        parsed.args.unshift(parsed.file);
-        parsed.command = shebang;
-
-        return resolveCommand(parsed);
-    }
-
-    return parsed.file;
-}
-
-function parseNonShell(parsed) {
-    if (!isWin) {
-        return parsed;
-    }
-
-    // Detect & add support for shebangs
-    const commandFile = detectShebang(parsed);
-
-    // We don't need a shell if the command filename is an executable
-    const needsShell = !isExecutableRegExp.test(commandFile);
-
-    // If a shell is required, use cmd.exe and take care of escaping everything correctly
-    // Note that `forceShell` is an hidden option used only in tests
-    if (parsed.options.forceShell || needsShell) {
-        // Need to double escape meta chars if the command is a cmd-shim located in `node_modules/.bin/`
-        // The cmd-shim simply calls execute the package bin file with NodeJS, proxying any argument
-        // Because the escape of metachars with ^ gets interpreted when the cmd.exe is first called,
-        // we need to double escape them
-        const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
-
-        // Normalize posix paths into OS compatible paths (e.g.: foo/bar -> foo\bar)
-        // This is necessary otherwise it will always fail with ENOENT in those cases
-        parsed.command = path.normalize(parsed.command);
-
-        // Escape command & arguments
-        parsed.command = escape.command(parsed.command);
-        parsed.args = parsed.args.map((arg) => escape.argument(arg, needsDoubleEscapeMetaChars));
-
-        const shellCommand = [parsed.command].concat(parsed.args).join(' ');
-
-        parsed.args = ['/d', '/s', '/c', `"${shellCommand}"`];
-        parsed.command = process.env.comspec || 'cmd.exe';
-        parsed.options.windowsVerbatimArguments = true; // Tell node's spawn that the arguments are already escaped
-    }
-
-    return parsed;
-}
-
-function parse(command, args, options) {
-    // Normalize arguments, similar to nodejs
-    if (args && !Array.isArray(args)) {
-        options = args;
-        args = null;
-    }
-
-    args = args ? args.slice(0) : []; // Clone array to avoid changing the original
-    options = Object.assign({}, options); // Clone object to avoid changing the original
-
-    // Build our parsed object
-    const parsed = {
-        command,
-        args,
-        options,
-        file: undefined,
-        original: {
-            command,
-            args,
-        },
-    };
-
-    // Delegate further parsing to shell or non-shell
-    return options.shell ? parsed : parseNonShell(parsed);
-}
-
-module.exports = parse;
-
-
-/***/ }),
-
-/***/ 582:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const {PassThrough} = __webpack_require__(413);
-
-module.exports = options => {
-	options = Object.assign({}, options);
-
-	const {array} = options;
-	let {encoding} = options;
-	const buffer = encoding === 'buffer';
-	let objectMode = false;
-
-	if (array) {
-		objectMode = !(encoding || buffer);
-	} else {
-		encoding = encoding || 'utf8';
-	}
-
-	if (buffer) {
-		encoding = null;
-	}
-
-	let len = 0;
-	const ret = [];
-	const stream = new PassThrough({objectMode});
-
-	if (encoding) {
-		stream.setEncoding(encoding);
-	}
-
-	stream.on('data', chunk => {
-		ret.push(chunk);
-
-		if (objectMode) {
-			len = ret.length;
-		} else {
-			len += chunk.length;
-		}
-	});
-
-	stream.getBufferedValue = () => {
-		if (array) {
-			return ret;
-		}
-
-		return buffer ? Buffer.concat(ret, len) : ret.join('');
-	};
-
-	stream.getBufferedLength = () => len;
-
-	return stream;
-};
-
-
-/***/ }),
-
 /***/ 589:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -11817,13 +10787,6 @@ module.exports = function isAbsoluteURL(url) {
 /***/ (function(module) {
 
 module.exports = require("http");
-
-/***/ }),
-
-/***/ 614:
-/***/ (function(module) {
-
-module.exports = require("events");
 
 /***/ }),
 
@@ -11908,9 +10871,9 @@ class RCBot {
         this.config = config;
         this.githubService = githubService;
         this.slackBotService = slackBotService;
-        this.configRuntimeValidation(config);
+        this.validateConfigValues(config);
     }
-    configRuntimeValidation(config) {
+    validateConfigValues(config) {
         if (!config.organization.length) {
             throw new Error('organization is empty :(');
         }
@@ -12055,66 +11018,6 @@ module.exports = function parseHeaders(headers) {
 
   return parsed;
 };
-
-
-/***/ }),
-
-/***/ 654:
-/***/ (function(module) {
-
-// This is not the set of all possible signals.
-//
-// It IS, however, the set of all signals that trigger
-// an exit on either Linux or BSD systems.  Linux is a
-// superset of the signal names supported on BSD, and
-// the unknown signals just fail to register, so we can
-// catch that easily enough.
-//
-// Don't bother with SIGKILL.  It's uncatchable, which
-// means that we can't fire any callbacks anyway.
-//
-// If a user does happen to register a handler on a non-
-// fatal signal like SIGWINCH or something, and then
-// exit, it'll end up firing `process.emit('exit')`, so
-// the handler will be fired anyway.
-//
-// SIGBUS, SIGFPE, SIGSEGV and SIGILL, when not raised
-// artificially, inherently leave the process in a
-// state from which it is not safe to try and enter JS
-// listeners.
-module.exports = [
-  'SIGABRT',
-  'SIGALRM',
-  'SIGHUP',
-  'SIGINT',
-  'SIGTERM'
-]
-
-if (process.platform !== 'win32') {
-  module.exports.push(
-    'SIGVTALRM',
-    'SIGXCPU',
-    'SIGXFSZ',
-    'SIGUSR2',
-    'SIGTRAP',
-    'SIGSYS',
-    'SIGQUIT',
-    'SIGIOT'
-    // should detect profiler and enable/disable accordingly.
-    // see #21
-    // 'SIGPROF'
-  )
-}
-
-if (process.platform === 'linux') {
-  module.exports.push(
-    'SIGIO',
-    'SIGPOLL',
-    'SIGPWR',
-    'SIGSTKFLT',
-    'SIGUNUSED'
-  )
-}
 
 
 /***/ }),
@@ -12372,375 +11275,6 @@ module.exports = function httpAdapter(config) {
 
 /***/ }),
 
-/***/ 675:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const path = __webpack_require__(622);
-const childProcess = __webpack_require__(129);
-const crossSpawn = __webpack_require__(20);
-const stripEof = __webpack_require__(768);
-const npmRunPath = __webpack_require__(406);
-const isStream = __webpack_require__(781);
-const _getStream = __webpack_require__(760);
-const pFinally = __webpack_require__(697);
-const onExit = __webpack_require__(260);
-const errname = __webpack_require__(418);
-const stdio = __webpack_require__(151);
-
-const TEN_MEGABYTES = 1000 * 1000 * 10;
-
-function handleArgs(cmd, args, opts) {
-	let parsed;
-
-	opts = Object.assign({
-		extendEnv: true,
-		env: {}
-	}, opts);
-
-	if (opts.extendEnv) {
-		opts.env = Object.assign({}, process.env, opts.env);
-	}
-
-	if (opts.__winShell === true) {
-		delete opts.__winShell;
-		parsed = {
-			command: cmd,
-			args,
-			options: opts,
-			file: cmd,
-			original: {
-				cmd,
-				args
-			}
-		};
-	} else {
-		parsed = crossSpawn._parse(cmd, args, opts);
-	}
-
-	opts = Object.assign({
-		maxBuffer: TEN_MEGABYTES,
-		buffer: true,
-		stripEof: true,
-		preferLocal: true,
-		localDir: parsed.options.cwd || process.cwd(),
-		encoding: 'utf8',
-		reject: true,
-		cleanup: true
-	}, parsed.options);
-
-	opts.stdio = stdio(opts);
-
-	if (opts.preferLocal) {
-		opts.env = npmRunPath.env(Object.assign({}, opts, {cwd: opts.localDir}));
-	}
-
-	if (opts.detached) {
-		// #115
-		opts.cleanup = false;
-	}
-
-	if (process.platform === 'win32' && path.basename(parsed.command) === 'cmd.exe') {
-		// #116
-		parsed.args.unshift('/q');
-	}
-
-	return {
-		cmd: parsed.command,
-		args: parsed.args,
-		opts,
-		parsed
-	};
-}
-
-function handleInput(spawned, input) {
-	if (input === null || input === undefined) {
-		return;
-	}
-
-	if (isStream(input)) {
-		input.pipe(spawned.stdin);
-	} else {
-		spawned.stdin.end(input);
-	}
-}
-
-function handleOutput(opts, val) {
-	if (val && opts.stripEof) {
-		val = stripEof(val);
-	}
-
-	return val;
-}
-
-function handleShell(fn, cmd, opts) {
-	let file = '/bin/sh';
-	let args = ['-c', cmd];
-
-	opts = Object.assign({}, opts);
-
-	if (process.platform === 'win32') {
-		opts.__winShell = true;
-		file = process.env.comspec || 'cmd.exe';
-		args = ['/s', '/c', `"${cmd}"`];
-		opts.windowsVerbatimArguments = true;
-	}
-
-	if (opts.shell) {
-		file = opts.shell;
-		delete opts.shell;
-	}
-
-	return fn(file, args, opts);
-}
-
-function getStream(process, stream, {encoding, buffer, maxBuffer}) {
-	if (!process[stream]) {
-		return null;
-	}
-
-	let ret;
-
-	if (!buffer) {
-		// TODO: Use `ret = util.promisify(stream.finished)(process[stream]);` when targeting Node.js 10
-		ret = new Promise((resolve, reject) => {
-			process[stream]
-				.once('end', resolve)
-				.once('error', reject);
-		});
-	} else if (encoding) {
-		ret = _getStream(process[stream], {
-			encoding,
-			maxBuffer
-		});
-	} else {
-		ret = _getStream.buffer(process[stream], {maxBuffer});
-	}
-
-	return ret.catch(err => {
-		err.stream = stream;
-		err.message = `${stream} ${err.message}`;
-		throw err;
-	});
-}
-
-function makeError(result, options) {
-	const {stdout, stderr} = result;
-
-	let err = result.error;
-	const {code, signal} = result;
-
-	const {parsed, joinedCmd} = options;
-	const timedOut = options.timedOut || false;
-
-	if (!err) {
-		let output = '';
-
-		if (Array.isArray(parsed.opts.stdio)) {
-			if (parsed.opts.stdio[2] !== 'inherit') {
-				output += output.length > 0 ? stderr : `\n${stderr}`;
-			}
-
-			if (parsed.opts.stdio[1] !== 'inherit') {
-				output += `\n${stdout}`;
-			}
-		} else if (parsed.opts.stdio !== 'inherit') {
-			output = `\n${stderr}${stdout}`;
-		}
-
-		err = new Error(`Command failed: ${joinedCmd}${output}`);
-		err.code = code < 0 ? errname(code) : code;
-	}
-
-	err.stdout = stdout;
-	err.stderr = stderr;
-	err.failed = true;
-	err.signal = signal || null;
-	err.cmd = joinedCmd;
-	err.timedOut = timedOut;
-
-	return err;
-}
-
-function joinCmd(cmd, args) {
-	let joinedCmd = cmd;
-
-	if (Array.isArray(args) && args.length > 0) {
-		joinedCmd += ' ' + args.join(' ');
-	}
-
-	return joinedCmd;
-}
-
-module.exports = (cmd, args, opts) => {
-	const parsed = handleArgs(cmd, args, opts);
-	const {encoding, buffer, maxBuffer} = parsed.opts;
-	const joinedCmd = joinCmd(cmd, args);
-
-	let spawned;
-	try {
-		spawned = childProcess.spawn(parsed.cmd, parsed.args, parsed.opts);
-	} catch (err) {
-		return Promise.reject(err);
-	}
-
-	let removeExitHandler;
-	if (parsed.opts.cleanup) {
-		removeExitHandler = onExit(() => {
-			spawned.kill();
-		});
-	}
-
-	let timeoutId = null;
-	let timedOut = false;
-
-	const cleanup = () => {
-		if (timeoutId) {
-			clearTimeout(timeoutId);
-			timeoutId = null;
-		}
-
-		if (removeExitHandler) {
-			removeExitHandler();
-		}
-	};
-
-	if (parsed.opts.timeout > 0) {
-		timeoutId = setTimeout(() => {
-			timeoutId = null;
-			timedOut = true;
-			spawned.kill(parsed.opts.killSignal);
-		}, parsed.opts.timeout);
-	}
-
-	const processDone = new Promise(resolve => {
-		spawned.on('exit', (code, signal) => {
-			cleanup();
-			resolve({code, signal});
-		});
-
-		spawned.on('error', err => {
-			cleanup();
-			resolve({error: err});
-		});
-
-		if (spawned.stdin) {
-			spawned.stdin.on('error', err => {
-				cleanup();
-				resolve({error: err});
-			});
-		}
-	});
-
-	function destroy() {
-		if (spawned.stdout) {
-			spawned.stdout.destroy();
-		}
-
-		if (spawned.stderr) {
-			spawned.stderr.destroy();
-		}
-	}
-
-	const handlePromise = () => pFinally(Promise.all([
-		processDone,
-		getStream(spawned, 'stdout', {encoding, buffer, maxBuffer}),
-		getStream(spawned, 'stderr', {encoding, buffer, maxBuffer})
-	]).then(arr => {
-		const result = arr[0];
-		result.stdout = arr[1];
-		result.stderr = arr[2];
-
-		if (result.error || result.code !== 0 || result.signal !== null) {
-			const err = makeError(result, {
-				joinedCmd,
-				parsed,
-				timedOut
-			});
-
-			// TODO: missing some timeout logic for killed
-			// https://github.com/nodejs/node/blob/master/lib/child_process.js#L203
-			// err.killed = spawned.killed || killed;
-			err.killed = err.killed || spawned.killed;
-
-			if (!parsed.opts.reject) {
-				return err;
-			}
-
-			throw err;
-		}
-
-		return {
-			stdout: handleOutput(parsed.opts, result.stdout),
-			stderr: handleOutput(parsed.opts, result.stderr),
-			code: 0,
-			failed: false,
-			killed: false,
-			signal: null,
-			cmd: joinedCmd,
-			timedOut: false
-		};
-	}), destroy);
-
-	crossSpawn._enoent.hookChildProcess(spawned, parsed.parsed);
-
-	handleInput(spawned, parsed.opts.input);
-
-	spawned.then = (onfulfilled, onrejected) => handlePromise().then(onfulfilled, onrejected);
-	spawned.catch = onrejected => handlePromise().catch(onrejected);
-
-	return spawned;
-};
-
-// TODO: set `stderr: 'ignore'` when that option is implemented
-module.exports.stdout = (...args) => module.exports(...args).then(x => x.stdout);
-
-// TODO: set `stdout: 'ignore'` when that option is implemented
-module.exports.stderr = (...args) => module.exports(...args).then(x => x.stderr);
-
-module.exports.shell = (cmd, opts) => handleShell(module.exports, cmd, opts);
-
-module.exports.sync = (cmd, args, opts) => {
-	const parsed = handleArgs(cmd, args, opts);
-	const joinedCmd = joinCmd(cmd, args);
-
-	if (isStream(parsed.opts.input)) {
-		throw new TypeError('The `input` option cannot be a stream in sync mode');
-	}
-
-	const result = childProcess.spawnSync(parsed.cmd, parsed.args, parsed.opts);
-	result.code = result.status;
-
-	if (result.error || result.status !== 0 || result.signal !== null) {
-		const err = makeError(result, {
-			joinedCmd,
-			parsed
-		});
-
-		if (!parsed.opts.reject) {
-			return err;
-		}
-
-		throw err;
-	}
-
-	return {
-		stdout: handleOutput(parsed.opts, result.stdout),
-		stderr: handleOutput(parsed.opts, result.stderr),
-		code: 0,
-		failed: false,
-		signal: null,
-		cmd: joinedCmd,
-		timedOut: false
-	};
-};
-
-module.exports.shellSync = (cmd, opts) => handleShell(module.exports.sync, cmd, opts);
-
-
-/***/ }),
-
 /***/ 688:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -12852,40 +11386,28 @@ exports.Deprecation = Deprecation;
 
 
 /*!
- * isobject <https://github.com/jonschlinkert/isobject>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
-}
-
-/*!
  * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
  *
  * Copyright (c) 2014-2017, Jon Schlinkert.
  * Released under the MIT License.
  */
 
-function isObjectObject(o) {
-  return isObject(o) === true
-    && Object.prototype.toString.call(o) === '[object Object]';
+function isObject(o) {
+  return Object.prototype.toString.call(o) === '[object Object]';
 }
 
 function isPlainObject(o) {
   var ctor,prot;
 
-  if (isObjectObject(o) === false) return false;
+  if (isObject(o) === false) return false;
 
   // If has modified constructor
   ctor = o.constructor;
-  if (typeof ctor !== 'function') return false;
+  if (ctor === undefined) return true;
 
   // If has modified prototype
   prot = ctor.prototype;
-  if (isObjectObject(prot) === false) return false;
+  if (isObject(prot) === false) return false;
 
   // If constructor does not have an Object-specific method
   if (prot.hasOwnProperty('isPrototypeOf') === false) {
@@ -12897,29 +11419,6 @@ function isPlainObject(o) {
 }
 
 module.exports = isPlainObject;
-
-
-/***/ }),
-
-/***/ 697:
-/***/ (function(module) {
-
-"use strict";
-
-module.exports = (promise, onFinally) => {
-	onFinally = onFinally || (() => {});
-
-	return promise.then(
-		val => new Promise(resolve => {
-			resolve(onFinally());
-		}).then(() => val),
-		err => new Promise(resolve => {
-			resolve(onFinally());
-		}).then(() => {
-			throw err;
-		})
-	);
-};
 
 
 /***/ }),
@@ -12956,77 +11455,6 @@ module.exports = function isCancel(value) {
 
 /***/ }),
 
-/***/ 742:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var fs = __webpack_require__(747)
-var core
-if (process.platform === 'win32' || global.TESTING_WINDOWS) {
-  core = __webpack_require__(818)
-} else {
-  core = __webpack_require__(197)
-}
-
-module.exports = isexe
-isexe.sync = sync
-
-function isexe (path, options, cb) {
-  if (typeof options === 'function') {
-    cb = options
-    options = {}
-  }
-
-  if (!cb) {
-    if (typeof Promise !== 'function') {
-      throw new TypeError('callback not provided')
-    }
-
-    return new Promise(function (resolve, reject) {
-      isexe(path, options || {}, function (er, is) {
-        if (er) {
-          reject(er)
-        } else {
-          resolve(is)
-        }
-      })
-    })
-  }
-
-  core(path, options || {}, function (er, is) {
-    // ignore EACCES because that just means we aren't allowed to run it
-    if (er) {
-      if (er.code === 'EACCES' || options && options.ignoreErrors) {
-        er = null
-        is = false
-      }
-    }
-    cb(er, is)
-  })
-}
-
-function sync (path, options) {
-  // my kingdom for a filtered catch
-  try {
-    return core.sync(path, options || {})
-  } catch (er) {
-    if (options && options.ignoreErrors || er.code === 'EACCES') {
-      return false
-    } else {
-      throw er
-    }
-  }
-}
-
-
-/***/ }),
-
-/***/ 747:
-/***/ (function(module) {
-
-module.exports = require("fs");
-
-/***/ }),
-
 /***/ 753:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -13043,7 +11471,7 @@ var isPlainObject = _interopDefault(__webpack_require__(696));
 var nodeFetch = _interopDefault(__webpack_require__(454));
 var requestError = __webpack_require__(463);
 
-const VERSION = "5.4.5";
+const VERSION = "5.4.7";
 
 function getBufferResponse(response) {
   return response.arrayBuffer();
@@ -13179,64 +11607,6 @@ const request = withDefaults(endpoint.endpoint, {
 
 exports.request = request;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 760:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-"use strict";
-
-const pump = __webpack_require__(453);
-const bufferStream = __webpack_require__(582);
-
-class MaxBufferError extends Error {
-	constructor() {
-		super('maxBuffer exceeded');
-		this.name = 'MaxBufferError';
-	}
-}
-
-function getStream(inputStream, options) {
-	if (!inputStream) {
-		return Promise.reject(new Error('Expected a stream'));
-	}
-
-	options = Object.assign({maxBuffer: Infinity}, options);
-
-	const {maxBuffer} = options;
-
-	let stream;
-	return new Promise((resolve, reject) => {
-		const rejectPromise = error => {
-			if (error) { // A null check
-				error.bufferedData = stream.getBufferedValue();
-			}
-			reject(error);
-		};
-
-		stream = pump(inputStream, bufferStream(options), error => {
-			if (error) {
-				rejectPromise(error);
-				return;
-			}
-
-			resolve();
-		});
-
-		stream.on('data', () => {
-			if (stream.getBufferedLength() > maxBuffer) {
-				rejectPromise(new MaxBufferError());
-			}
-		});
-	}).then(() => stream.getBufferedValue());
-}
-
-module.exports = getStream;
-module.exports.buffer = (stream, options) => getStream(stream, Object.assign({}, options, {encoding: 'buffer'}));
-module.exports.array = (stream, options) => getStream(stream, Object.assign({}, options, {array: true}));
-module.exports.MaxBufferError = MaxBufferError;
 
 
 /***/ }),
@@ -13400,53 +11770,6 @@ function plural(ms, n, name) {
 
 /***/ }),
 
-/***/ 763:
-/***/ (function(module) {
-
-module.exports = removeHook
-
-function removeHook (state, name, method) {
-  if (!state.registry[name]) {
-    return
-  }
-
-  var index = state.registry[name]
-    .map(function (registered) { return registered.orig })
-    .indexOf(method)
-
-  if (index === -1) {
-    return
-  }
-
-  state.registry[name].splice(index, 1)
-}
-
-
-/***/ }),
-
-/***/ 768:
-/***/ (function(module) {
-
-"use strict";
-
-module.exports = function (x) {
-	var lf = typeof x === 'string' ? '\n' : '\n'.charCodeAt();
-	var cr = typeof x === 'string' ? '\r' : '\r'.charCodeAt();
-
-	if (x[x.length - 1] === lf) {
-		x = x.slice(0, x.length - 1);
-	}
-
-	if (x[x.length - 1] === cr) {
-		x = x.slice(0, x.length - 1);
-	}
-
-	return x;
-};
-
-
-/***/ }),
-
 /***/ 779:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -13530,35 +11853,6 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 });
 
 module.exports = Axios;
-
-
-/***/ }),
-
-/***/ 781:
-/***/ (function(module) {
-
-"use strict";
-
-
-var isStream = module.exports = function (stream) {
-	return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
-};
-
-isStream.writable = function (stream) {
-	return isStream(stream) && stream.writable !== false && typeof stream._write === 'function' && typeof stream._writableState === 'object';
-};
-
-isStream.readable = function (stream) {
-	return isStream(stream) && stream.readable !== false && typeof stream._read === 'function' && typeof stream._readableState === 'object';
-};
-
-isStream.duplex = function (stream) {
-	return isStream.writable(stream) && isStream.readable(stream);
-};
-
-isStream.transform = function (stream) {
-	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
-};
 
 
 /***/ }),
@@ -13783,27 +12077,23 @@ function localstorage() {
 /***/ }),
 
 /***/ 796:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports) {
 
 "use strict";
 
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var osName = _interopDefault(__webpack_require__(2));
-
 function getUserAgent() {
-  try {
-    return `Node.js/${process.version.substr(1)} (${osName()}; ${process.arch})`;
-  } catch (error) {
-    if (/wmic os get Caption/.test(error.message)) {
-      return "Windows <version undetectable>";
-    }
-
-    return "<environment undetectable>";
+  if (typeof navigator === "object" && "userAgent" in navigator) {
+    return navigator.userAgent;
   }
+
+  if (typeof process === "object" && "version" in process) {
+    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
+  }
+
+  return "<environment undetectable>";
 }
 
 exports.getUserAgent = getUserAgent;
@@ -13887,197 +12177,6 @@ exports.createTokenAuth = createTokenAuth;
 
 /***/ }),
 
-/***/ 814:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-const isWindows = process.platform === 'win32' ||
-    process.env.OSTYPE === 'cygwin' ||
-    process.env.OSTYPE === 'msys'
-
-const path = __webpack_require__(622)
-const COLON = isWindows ? ';' : ':'
-const isexe = __webpack_require__(742)
-
-const getNotFoundError = (cmd) =>
-  Object.assign(new Error(`not found: ${cmd}`), { code: 'ENOENT' })
-
-const getPathInfo = (cmd, opt) => {
-  const colon = opt.colon || COLON
-
-  // If it has a slash, then we don't bother searching the pathenv.
-  // just check the file itself, and that's it.
-  const pathEnv = cmd.match(/\//) || isWindows && cmd.match(/\\/) ? ['']
-    : (
-      [
-        // windows always checks the cwd first
-        ...(isWindows ? [process.cwd()] : []),
-        ...(opt.path || process.env.PATH ||
-          /* istanbul ignore next: very unusual */ '').split(colon),
-      ]
-    )
-  const pathExtExe = isWindows
-    ? opt.pathExt || process.env.PATHEXT || '.EXE;.CMD;.BAT;.COM'
-    : ''
-  const pathExt = isWindows ? pathExtExe.split(colon) : ['']
-
-  if (isWindows) {
-    if (cmd.indexOf('.') !== -1 && pathExt[0] !== '')
-      pathExt.unshift('')
-  }
-
-  return {
-    pathEnv,
-    pathExt,
-    pathExtExe,
-  }
-}
-
-const which = (cmd, opt, cb) => {
-  if (typeof opt === 'function') {
-    cb = opt
-    opt = {}
-  }
-  if (!opt)
-    opt = {}
-
-  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
-  const found = []
-
-  const step = i => new Promise((resolve, reject) => {
-    if (i === pathEnv.length)
-      return opt.all && found.length ? resolve(found)
-        : reject(getNotFoundError(cmd))
-
-    const ppRaw = pathEnv[i]
-    const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw
-
-    const pCmd = path.join(pathPart, cmd)
-    const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd
-      : pCmd
-
-    resolve(subStep(p, i, 0))
-  })
-
-  const subStep = (p, i, ii) => new Promise((resolve, reject) => {
-    if (ii === pathExt.length)
-      return resolve(step(i + 1))
-    const ext = pathExt[ii]
-    isexe(p + ext, { pathExt: pathExtExe }, (er, is) => {
-      if (!er && is) {
-        if (opt.all)
-          found.push(p + ext)
-        else
-          return resolve(p + ext)
-      }
-      return resolve(subStep(p, i, ii + 1))
-    })
-  })
-
-  return cb ? step(0).then(res => cb(null, res), cb) : step(0)
-}
-
-const whichSync = (cmd, opt) => {
-  opt = opt || {}
-
-  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
-  const found = []
-
-  for (let i = 0; i < pathEnv.length; i ++) {
-    const ppRaw = pathEnv[i]
-    const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw
-
-    const pCmd = path.join(pathPart, cmd)
-    const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd
-      : pCmd
-
-    for (let j = 0; j < pathExt.length; j ++) {
-      const cur = p + pathExt[j]
-      try {
-        const is = isexe.sync(cur, { pathExt: pathExtExe })
-        if (is) {
-          if (opt.all)
-            found.push(cur)
-          else
-            return cur
-        }
-      } catch (ex) {}
-    }
-  }
-
-  if (opt.all && found.length)
-    return found
-
-  if (opt.nothrow)
-    return null
-
-  throw getNotFoundError(cmd)
-}
-
-module.exports = which
-which.sync = whichSync
-
-
-/***/ }),
-
-/***/ 816:
-/***/ (function(module) {
-
-"use strict";
-
-module.exports = /^#!(.*)/;
-
-
-/***/ }),
-
-/***/ 818:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-module.exports = isexe
-isexe.sync = sync
-
-var fs = __webpack_require__(747)
-
-function checkPathExt (path, options) {
-  var pathext = options.pathExt !== undefined ?
-    options.pathExt : process.env.PATHEXT
-
-  if (!pathext) {
-    return true
-  }
-
-  pathext = pathext.split(';')
-  if (pathext.indexOf('') !== -1) {
-    return true
-  }
-  for (var i = 0; i < pathext.length; i++) {
-    var p = pathext[i].toLowerCase()
-    if (p && path.substr(-p.length).toLowerCase() === p) {
-      return true
-    }
-  }
-  return false
-}
-
-function checkStat (stat, path, options) {
-  if (!stat.isSymbolicLink() && !stat.isFile()) {
-    return false
-  }
-  return checkPathExt(path, options)
-}
-
-function isexe (path, options, cb) {
-  fs.stat(path, function (er, stat) {
-    cb(er, er ? false : checkStat(stat, path, options))
-  })
-}
-
-function sync (path, options) {
-  return checkStat(fs.statSync(path), path, options)
-}
-
-
-/***/ }),
-
 /***/ 825:
 /***/ (function(module) {
 
@@ -14140,27 +12239,6 @@ module.exports = Cancel;
 
 /***/ }),
 
-/***/ 829:
-/***/ (function(module) {
-
-"use strict";
-
-module.exports = opts => {
-	opts = opts || {};
-
-	const env = opts.env || process.env;
-	const platform = opts.platform || process.platform;
-
-	if (platform !== 'win32') {
-		return 'PATH';
-	}
-
-	return Object.keys(env).find(x => x.toUpperCase() === 'PATH') || 'Path';
-};
-
-
-/***/ }),
-
 /***/ 835:
 /***/ (function(module) {
 
@@ -14186,11 +12264,13 @@ const Endpoints = {
     createRegistrationTokenForRepo: ["POST /repos/{owner}/{repo}/actions/runners/registration-token"],
     createRemoveTokenForOrg: ["POST /orgs/{org}/actions/runners/remove-token"],
     createRemoveTokenForRepo: ["POST /repos/{owner}/{repo}/actions/runners/remove-token"],
+    createWorkflowDispatch: ["POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches"],
     deleteArtifact: ["DELETE /repos/{owner}/{repo}/actions/artifacts/{artifact_id}"],
     deleteOrgSecret: ["DELETE /orgs/{org}/actions/secrets/{secret_name}"],
     deleteRepoSecret: ["DELETE /repos/{owner}/{repo}/actions/secrets/{secret_name}"],
     deleteSelfHostedRunnerFromOrg: ["DELETE /orgs/{org}/actions/runners/{runner_id}"],
     deleteSelfHostedRunnerFromRepo: ["DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}"],
+    deleteWorkflowRun: ["DELETE /repos/{owner}/{repo}/actions/runs/{run_id}"],
     deleteWorkflowRunLogs: ["DELETE /repos/{owner}/{repo}/actions/runs/{run_id}/logs"],
     downloadArtifact: ["GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}/{archive_format}"],
     downloadJobLogsForWorkflowRun: ["GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs"],
@@ -14349,6 +12429,14 @@ const Endpoints = {
     revokeInstallationAccessToken: ["DELETE /installation/token"],
     suspendInstallation: ["PUT /app/installations/{installation_id}/suspended"],
     unsuspendInstallation: ["DELETE /app/installations/{installation_id}/suspended"]
+  },
+  billing: {
+    getGithubActionsBillingOrg: ["GET /orgs/{org}/settings/billing/actions"],
+    getGithubActionsBillingUser: ["GET /users/{username}/settings/billing/actions"],
+    getGithubPackagesBillingOrg: ["GET /orgs/{org}/settings/billing/packages"],
+    getGithubPackagesBillingUser: ["GET /users/{username}/settings/billing/packages"],
+    getSharedStorageBillingOrg: ["GET /orgs/{org}/settings/billing/shared-storage"],
+    getSharedStorageBillingUser: ["GET /users/{username}/settings/billing/shared-storage"]
   },
   checks: {
     create: ["POST /repos/{owner}/{repo}/check-runs", {
@@ -14615,7 +12703,7 @@ const Endpoints = {
         previews: ["wyandotte"]
       }
     }],
-    listReposForUser: ["GET /user/{migration_id}/repositories", {
+    listReposForUser: ["GET /user/migrations/{migration_id}/repositories", {
       mediaType: {
         previews: ["wyandotte"]
       }
@@ -14902,6 +12990,13 @@ const Endpoints = {
         previews: ["squirrel-girl"]
       }
     }],
+    deleteLegacy: ["DELETE /reactions/{reaction_id}", {
+      mediaType: {
+        previews: ["squirrel-girl"]
+      }
+    }, {
+      deprecated: "octokit.reactions.deleteLegacy() is deprecated, see https://developer.github.com/v3/reactions/#delete-a-reaction-legacy"
+    }],
     listForCommitComment: ["GET /repos/{owner}/{repo}/comments/{comment_id}/reactions", {
       mediaType: {
         previews: ["squirrel-girl"]
@@ -15051,7 +13146,11 @@ const Endpoints = {
         previews: ["zzzax"]
       }
     }],
-    getCommunityProfileMetrics: ["GET /repos/{owner}/{repo}/community/profile"],
+    getCommunityProfileMetrics: ["GET /repos/{owner}/{repo}/community/profile", {
+      mediaType: {
+        previews: ["black-panther"]
+      }
+    }],
     getContent: ["GET /repos/{owner}/{repo}/contents/{path}"],
     getContributorsStats: ["GET /repos/{owner}/{repo}/stats/contributors"],
     getDeployKey: ["GET /repos/{owner}/{repo}/keys/{key_id}"],
@@ -15170,7 +13269,11 @@ const Endpoints = {
     issuesAndPullRequests: ["GET /search/issues"],
     labels: ["GET /search/labels"],
     repos: ["GET /search/repositories"],
-    topics: ["GET /search/topics"],
+    topics: ["GET /search/topics", {
+      mediaType: {
+        previews: ["mercy"]
+      }
+    }],
     users: ["GET /search/users"]
   },
   teams: {
@@ -15253,7 +13356,7 @@ const Endpoints = {
   }
 };
 
-const VERSION = "4.0.0";
+const VERSION = "4.1.1";
 
 function endpointsToMethods(octokit, endpointsMap) {
   const newMethods = {};
@@ -15420,28 +13523,25 @@ module.exports = (
 /***/ }),
 
 /***/ 866:
-/***/ (function(module, __unusedexports, __webpack_require__) {
+/***/ (function(module) {
 
-"use strict";
+module.exports = removeHook
 
-const shebangRegex = __webpack_require__(816);
+function removeHook (state, name, method) {
+  if (!state.registry[name]) {
+    return
+  }
 
-module.exports = (string = '') => {
-	const match = string.match(shebangRegex);
+  var index = state.registry[name]
+    .map(function (registered) { return registered.orig })
+    .indexOf(method)
 
-	if (!match) {
-		return null;
-	}
+  if (index === -1) {
+    return
+  }
 
-	const [path, argument] = match[0].replace(/#! ?/, '').split(' ');
-	const binary = path.split('/').pop();
-
-	if (binary === 'env') {
-		return argument;
-	}
-
-	return argument ? `${binary} ${argument}` : binary;
-};
+  state.registry[name].splice(index, 1)
+}
 
 
 /***/ }),
@@ -15450,73 +13550,6 @@ module.exports = (string = '') => {
 /***/ (function(module) {
 
 module.exports = require("tty");
-
-/***/ }),
-
-/***/ 881:
-/***/ (function(module) {
-
-"use strict";
-
-
-const isWin = process.platform === 'win32';
-
-function notFoundError(original, syscall) {
-    return Object.assign(new Error(`${syscall} ${original.command} ENOENT`), {
-        code: 'ENOENT',
-        errno: 'ENOENT',
-        syscall: `${syscall} ${original.command}`,
-        path: original.command,
-        spawnargs: original.args,
-    });
-}
-
-function hookChildProcess(cp, parsed) {
-    if (!isWin) {
-        return;
-    }
-
-    const originalEmit = cp.emit;
-
-    cp.emit = function (name, arg1) {
-        // If emitting "exit" event and exit code is 1, we need to check if
-        // the command exists and emit an "error" instead
-        // See https://github.com/IndigoUnited/node-cross-spawn/issues/16
-        if (name === 'exit') {
-            const err = verifyENOENT(arg1, parsed, 'spawn');
-
-            if (err) {
-                return originalEmit.call(cp, 'error', err);
-            }
-        }
-
-        return originalEmit.apply(cp, arguments); // eslint-disable-line prefer-rest-params
-    };
-}
-
-function verifyENOENT(status, parsed) {
-    if (isWin && status === 1 && !parsed.file) {
-        return notFoundError(parsed.original, 'spawn');
-    }
-
-    return null;
-}
-
-function verifyENOENTSync(status, parsed) {
-    if (isWin && status === 1 && !parsed.file) {
-        return notFoundError(parsed.original, 'spawnSync');
-    }
-
-    return null;
-}
-
-module.exports = {
-    hookChildProcess,
-    verifyENOENT,
-    verifyENOENTSync,
-    notFoundError,
-};
-
 
 /***/ }),
 
@@ -15555,7 +13588,7 @@ var pluginRequestLog = __webpack_require__(916);
 var pluginPaginateRest = __webpack_require__(299);
 var pluginRestEndpointMethods = __webpack_require__(842);
 
-const VERSION = "18.0.0";
+const VERSION = "18.0.2";
 
 const Octokit = core.Octokit.plugin(pluginRequestLog.requestLog, pluginRestEndpointMethods.restEndpointMethods, pluginPaginateRest.paginateRest).defaults({
   userAgent: `octokit-rest.js/${VERSION}`
@@ -15578,7 +13611,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var request = __webpack_require__(753);
 var universalUserAgent = __webpack_require__(796);
 
-const VERSION = "4.5.1";
+const VERSION = "4.5.2";
 
 class GraphqlError extends Error {
   constructor(request, response) {
@@ -15795,55 +13828,6 @@ module.exports = function dispatchRequest(config) {
     return Promise.reject(reason);
   });
 };
-
-
-/***/ }),
-
-/***/ 969:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var wrappy = __webpack_require__(11)
-module.exports = wrappy(once)
-module.exports.strict = wrappy(onceStrict)
-
-once.proto = once(function () {
-  Object.defineProperty(Function.prototype, 'once', {
-    value: function () {
-      return once(this)
-    },
-    configurable: true
-  })
-
-  Object.defineProperty(Function.prototype, 'onceStrict', {
-    value: function () {
-      return onceStrict(this)
-    },
-    configurable: true
-  })
-})
-
-function once (fn) {
-  var f = function () {
-    if (f.called) return f.value
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  f.called = false
-  return f
-}
-
-function onceStrict (fn) {
-  var f = function () {
-    if (f.called)
-      throw new Error(f.onceError)
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  var name = fn.name || 'Function wrapped with `once`'
-  f.onceError = name + " shouldn't be called more than once"
-  f.called = false
-  return f
-}
 
 
 /***/ })

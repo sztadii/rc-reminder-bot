@@ -22,10 +22,10 @@ export default class RCBot {
     private githubService: GithubService,
     private slackBotService: SlackBotService
   ) {
-    this.configRuntimeValidation(config)
+    this.validateConfigValues(config)
   }
 
-  configRuntimeValidation(config: RCBotConfig): void {
+  validateConfigValues(config: RCBotConfig): void {
     if (!config.organization.length) {
       throw new Error('organization is empty :(')
     }
