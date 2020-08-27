@@ -1534,7 +1534,7 @@ module.exports = InterceptorManager;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-const VERSION = "2.2.4";
+const VERSION = "2.3.1";
 
 /**
  * Some “list” response that can be paginated have a different response structure
@@ -2359,7 +2359,7 @@ function _objectSpread2(target) {
   return target;
 }
 
-const VERSION = "3.1.1";
+const VERSION = "3.1.2";
 
 class Octokit {
   constructor(options = {}) {
@@ -13356,7 +13356,7 @@ const Endpoints = {
   }
 };
 
-const VERSION = "4.1.1";
+const VERSION = "4.1.3";
 
 function endpointsToMethods(octokit, endpointsMap) {
   const newMethods = {};
@@ -13588,7 +13588,7 @@ var pluginRequestLog = __webpack_require__(916);
 var pluginPaginateRest = __webpack_require__(299);
 var pluginRestEndpointMethods = __webpack_require__(842);
 
-const VERSION = "18.0.2";
+const VERSION = "18.0.4";
 
 const Octokit = core.Octokit.plugin(pluginRequestLog.requestLog, pluginRestEndpointMethods.restEndpointMethods, pluginPaginateRest.paginateRest).defaults({
   userAgent: `octokit-rest.js/${VERSION}`
@@ -13611,13 +13611,16 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var request = __webpack_require__(753);
 var universalUserAgent = __webpack_require__(796);
 
-const VERSION = "4.5.2";
+const VERSION = "4.5.4";
 
 class GraphqlError extends Error {
   constructor(request, response) {
     const message = response.data.errors[0].message;
     super(message);
     Object.assign(this, response.data);
+    Object.assign(this, {
+      headers: response.headers
+    });
     this.name = "GraphqlError";
     this.request = request; // Maintains proper stack trace (only available on V8)
 
@@ -13650,7 +13653,14 @@ function graphql(request, query, options) {
   }, {});
   return request(requestOptions).then(response => {
     if (response.data.errors) {
+      const headers = {};
+
+      for (const key of Object.keys(response.headers)) {
+        headers[key] = response.headers[key];
+      }
+
       throw new GraphqlError(requestOptions, {
+        headers,
         data: response.data
       });
     }
