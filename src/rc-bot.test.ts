@@ -146,10 +146,8 @@ describe('RCBot', () => {
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
-  it('send error message when something went wrong', async () => {
-    mockAllValues(() => {
-      throw new Error('500')
-    })
+  it('send error message when something went wrong during fetching organization repos', async () => {
+    mockAllValues(Promise.reject('500'))
 
     await rcBot.checkBranches()
 
