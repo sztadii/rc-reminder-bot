@@ -390,4 +390,18 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
+
+  it('send message to the slack channel when organization do not have any repos', async () => {
+    const allRepos = []
+
+    mockAllValues(allRepos, null, null)
+
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+
+    const expectedMessage = 'Organization do not have any repos :('
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+  })
 })

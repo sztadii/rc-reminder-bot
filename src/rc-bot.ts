@@ -46,6 +46,14 @@ export default class RCBot {
       const allOrganizationRepos = await this.githubService.getAllOrganizationRepos(
         this.config.organization
       )
+
+      if (!allOrganizationRepos.length) {
+        await this.slackBotService.postMessageToReminderChannel(
+          'Organization do not have any repos :('
+        )
+        return
+      }
+
       const infosFromAffectedBranches = await this.getInfosFromAffectedBranches(
         allOrganizationRepos
       )
