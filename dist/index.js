@@ -10889,6 +10889,10 @@ class RCBot {
             console.log('\nStart running checkBranches script \n');
             try {
                 const allOrganizationRepos = yield this.githubService.getAllOrganizationRepos(this.config.organization);
+                if (!allOrganizationRepos.length) {
+                    yield this.slackBotService.postMessageToReminderChannel('Organization do not have any repos :(');
+                    return;
+                }
                 const infosFromAffectedBranches = yield this.getInfosFromAffectedBranches(allOrganizationRepos);
                 if (!infosFromAffectedBranches.length) {
                     const goodJobMessage = 'All your repos are looking well. Good job team :)';
