@@ -20,7 +20,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@actions/core": "^1.2.5",
+    "@actions/core": "^1.2.6",
     "@octokit/rest": "^18.0.4",
     "@octokit/types": "^5.4.1",
     "axios": "0.18.1",
