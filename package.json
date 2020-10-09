@@ -6,7 +6,7 @@
     "start-prod": "npm run env-file-verification && npm run build-and-pack && npm run exec-prod",
     "env-file-verification": "node env-file-verification.js",
     "build-and-pack": "npm run clean && npm run build && npm run pack && :",
-    "clean": "rm -rf dist && rm -rf lib",
+    "clean": "rm dist/index.js && rm -rf lib",
     "pack": "ncc build lib/index.js",
     "build": "tsc",
     "exec-dev": "ts-node-dev --respawn --transpile-only -r dotenv/config src/index.ts",
