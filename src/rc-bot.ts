@@ -14,6 +14,7 @@ type RCBotConfig = {
   baseBranch: string
   headBranch: string
   organization: string
+  sendAllSuccessConfirmation?: boolean
 }
 
 export default class RCBot {
@@ -22,6 +23,10 @@ export default class RCBot {
     private githubService: GithubService,
     private slackBotService: SlackBotService
   ) {
+    this.config = {
+      ...config,
+      sendAllSuccessConfirmation: config.sendAllSuccessConfirmation ?? true
+    }
     this.validateConfigValues(config)
   }
 
@@ -57,6 +62,11 @@ export default class RCBot {
       const infosFromAffectedBranches = await this.getInfosFromAffectedBranches(
         allOrganizationRepos
       )
+
+      const canSkipSendingSuccessMessage =
+        !infosFromAffectedBranches.length && !this.config.sendAllSuccessConfirmation
+
+      if (canSkipSendingSuccessMessage) return
 
       if (!infosFromAffectedBranches.length) {
         const goodJobMessage = 'All your repos are looking well. Good job team :)'

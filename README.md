@@ -41,6 +41,8 @@ jobs:
           HEAD_BRANCH: master
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
           SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
+          # Expected values [ true, false ]
+          SEND_ALL_SUCCESS_CONFIRMATION: true
 ```
 
 ## Expected result:
