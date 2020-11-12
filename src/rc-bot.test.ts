@@ -40,6 +40,11 @@ describe('RCBot', () => {
           {
             author: {
               login: 'Batman'
+            },
+            commit: {
+              committer: {
+                name: 'Chris'
+              }
             }
           }
         ]
@@ -175,7 +180,7 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
-      'Something went wrong :('
+      'Something went wrong during fetching organization repos :('
     )
   })
 

@@ -10939,6 +10939,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment_1 = __importDefault(__webpack_require__(482));
+const handle_promise_1 = __importDefault(__webpack_require__(986));
 class RCBot {
     constructor(config, githubService, slackBotService) {
         var _a;
@@ -10962,60 +10963,58 @@ class RCBot {
     checkBranches() {
         return __awaiter(this, void 0, void 0, function* () {
             console.log('\nStart running checkBranches script \n');
-            try {
-                const allOrganizationRepos = yield this.githubService.getAllOrganizationRepos(this.config.organization);
-                if (!allOrganizationRepos.length) {
-                    yield this.slackBotService.postMessageToReminderChannel('Organization do not have any repos :(');
-                    return;
-                }
-                const infosFromAffectedBranches = yield this.getInfosFromAffectedBranches(allOrganizationRepos);
-                const canSkipSendingSuccessMessage = !infosFromAffectedBranches.length && !this.config.sendAllSuccessConfirmation;
-                if (canSkipSendingSuccessMessage)
-                    return;
-                if (!infosFromAffectedBranches.length) {
-                    const goodJobMessage = 'All your repos are looking well. Good job team :)';
-                    yield this.slackBotService.postMessageToReminderChannel(goodJobMessage);
-                    return;
-                }
-                const reminderMessage = this.getReminderMessage(infosFromAffectedBranches);
-                yield this.slackBotService.postMessageToReminderChannel(reminderMessage);
+            const [allOrganizationRepos, error] = yield handle_promise_1.default(this.githubService.getAllOrganizationRepos(this.config.organization));
+            if (error) {
+                yield this.slackBotService.postMessageToReminderChannel('Something went wrong during fetching organization repos :(');
+                return;
             }
-            catch (e) {
-                yield this.slackBotService.postMessageToReminderChannel('Something went wrong :(');
+            if (!allOrganizationRepos.length) {
+                yield this.slackBotService.postMessageToReminderChannel('Organization do not have any repos :(');
+                return;
             }
+            const infosFromAffectedBranches = yield this.getInfosFromAffectedBranches(allOrganizationRepos);
+            const canSkipSendingSuccessMessage = !infosFromAffectedBranches.length && !this.config.sendAllSuccessConfirmation;
+            if (canSkipSendingSuccessMessage)
+                return;
+            if (!infosFromAffectedBranches.length) {
+                const goodJobMessage = 'All your repos are looking well. Good job team :)';
+                yield this.slackBotService.postMessageToReminderChannel(goodJobMessage);
+                return;
+            }
+            const reminderMessage = this.getReminderMessage(infosFromAffectedBranches);
+            yield this.slackBotService.postMessageToReminderChannel(reminderMessage);
         });
     }
     getInfosFromAffectedBranches(repos) {
         return __awaiter(this, void 0, void 0, function* () {
             const allBranchesResponses = repos.map((repo) => __awaiter(this, void 0, void 0, function* () {
                 if (repo.archived)
-                    return null;
-                try {
-                    const compareData = yield this.githubService.compareTwoBranches({
-                        owner: repo.owner.login,
-                        repo: repo.name,
-                        base: this.config.baseBranch,
-                        head: this.config.headBranch
-                    });
-                    const { files = [], commits: rawCommits = [] } = compareData.data;
-                    if (!files.length)
-                        return null;
-                    const commits = rawCommits.filter((commit) => commit.commit.committer.name !== 'Github');
-                    const allAuthors = commits.map((commit) => { var _a; return (_a = commit === null || commit === void 0 ? void 0 : commit.author) === null || _a === void 0 ? void 0 : _a.login; }).filter(Boolean);
-                    const authors = [...new Set(allAuthors)];
-                    const current = moment_1.default();
-                    const past = moment_1.default(commits[0].commit.committer.date);
-                    const firstCommitDelay = current.diff(past, 'days');
-                    return {
-                        repoName: repo.name,
-                        commitsCount: commits.length,
-                        authors,
-                        delay: firstCommitDelay
-                    };
-                }
-                catch (e) {
-                    return null;
-                }
+                    return;
+                const [compareData, error] = yield handle_promise_1.default(this.githubService.compareTwoBranches({
+                    owner: repo.owner.login,
+                    repo: repo.name,
+                    base: this.config.baseBranch,
+                    head: this.config.headBranch
+                }));
+                if (error)
+                    return;
+                const { files = [], commits: rawCommits = [] } = compareData.data;
+                if (!files.length)
+                    return;
+                const commits = rawCommits.filter((rawCommit) => rawCommit.commit.committer.name !== 'Github');
+                const allAuthors = commits.map((commit) => { var _a; return (_a = commit === null || commit === void 0 ? void 0 : commit.author) === null || _a === void 0 ? void 0 : _a.login; }).filter(Boolean);
+                const authors = [...new Set(allAuthors)];
+                if (!commits.length)
+                    return;
+                const current = moment_1.default();
+                const past = moment_1.default(commits[0].commit.committer.date);
+                const firstCommitDelay = current.diff(past, 'days');
+                return {
+                    repoName: repo.name,
+                    commitsCount: commits.length,
+                    authors,
+                    delay: firstCommitDelay
+                };
             }));
             const allBranchesInfos = yield Promise.all(allBranchesResponses);
             return allBranchesInfos.filter(Boolean);
@@ -13928,6 +13927,38 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
+
+/***/ }),
+
+/***/ 986:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+function handlePromise(promise) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const value = yield promise;
+            return [value];
+        }
+        catch (e) {
+            const errorMessage = e.message || 'Something went wrong';
+            return [undefined, errorMessage];
+        }
+    });
+}
+exports.default = handlePromise;
+//# sourceMappingURL=handle-promise.js.map
 
 /***/ })
 
