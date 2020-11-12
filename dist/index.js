@@ -10973,16 +10973,15 @@ class RCBot {
                 return;
             }
             const infosFromAffectedBranches = yield this.getInfosFromAffectedBranches(allOrganizationRepos);
-            const canSkipSendingSuccessMessage = !infosFromAffectedBranches.length && !this.config.sendAllSuccessConfirmation;
-            if (canSkipSendingSuccessMessage)
-                return;
-            if (!infosFromAffectedBranches.length) {
-                const goodJobMessage = 'All your repos are looking well. Good job team :)';
-                yield this.slackBotService.postMessageToReminderChannel(goodJobMessage);
+            if (infosFromAffectedBranches.length) {
+                const reminderMessage = this.getReminderMessage(infosFromAffectedBranches);
+                yield this.slackBotService.postMessageToReminderChannel(reminderMessage);
                 return;
             }
-            const reminderMessage = this.getReminderMessage(infosFromAffectedBranches);
-            yield this.slackBotService.postMessageToReminderChannel(reminderMessage);
+            if (!this.config.sendAllSuccessConfirmation)
+                return;
+            const goodJobMessage = 'All your repos are looking well. Good job team :)';
+            yield this.slackBotService.postMessageToReminderChannel(goodJobMessage);
         });
     }
     getInfosFromAffectedBranches(repos) {
