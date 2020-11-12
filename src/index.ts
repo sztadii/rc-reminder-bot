@@ -18,7 +18,8 @@ function run() {
     {
       organization: getInputValue('ORGANIZATION_NAME'),
       baseBranch: getInputValue('BASE_BRANCH'),
-      headBranch: getInputValue('HEAD_BRANCH')
+      headBranch: getInputValue('HEAD_BRANCH'),
+      sendAllSuccessConfirmation: getInputValue('SEND_ALL_SUCCESS_CONFIRMATION') === 'true'
     },
     new GithubService(getInputValue('GH_ACCESS_TOKEN')),
     new SlackBotService(getInputValue('SLACK_CHANNEL_WEBHOOK_URL'), isProduction)

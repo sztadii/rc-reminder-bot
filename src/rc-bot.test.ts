@@ -146,6 +146,28 @@ describe('RCBot', () => {
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
 
+  it('do not send `good job` message if sendAllSuccessConfirmation flag has false value', async () => {
+    const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
+    const firstBranchDiff = { data: { files: [] } }
+
+    mockAllValues(allRepos, firstBranchDiff)
+
+    rcBot = new RCBot(
+      {
+        organization: 'Spotify',
+        baseBranch: 'develop',
+        headBranch: 'master',
+        sendAllSuccessConfirmation: false
+      },
+      githubService,
+      slackBotService
+    )
+
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(0)
+  })
+
   it('send error message when something went wrong during fetching organization repos', async () => {
     mockAllValues(Promise.reject('500'))
 
