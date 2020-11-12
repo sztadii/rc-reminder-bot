@@ -1,7 +1,6 @@
 import moment from 'moment'
-import GithubService from './services/github-service'
+import GithubService, { OrganizationRepos } from './services/github-service'
 import SlackBotService from './services/slackbot-service'
-import { ReposListForOrgResponseData } from '@octokit/types'
 
 type RepoInfo = {
   repoName: string
@@ -81,9 +80,7 @@ export default class RCBot {
     }
   }
 
-  private async getInfosFromAffectedBranches(
-    repos: ReposListForOrgResponseData
-  ): Promise<RepoInfo[]> {
+  private async getInfosFromAffectedBranches(repos: OrganizationRepos): Promise<RepoInfo[]> {
     const allBranchesResponses = repos.map(async (repo) => {
       if (repo.archived) return null
 

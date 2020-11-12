@@ -2,8 +2,10 @@ import { Octokit } from '@octokit/rest'
 import { ReposListForOrgResponseData } from '@octokit/types/dist-types/generated/Endpoints'
 import { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types'
 
-type compareTwoBranchesParams = RestEndpointMethodTypes['repos']['compareCommits']['parameters']
-type compareTwoBranchesResponse = RestEndpointMethodTypes['repos']['compareCommits']['response']
+type CompareTwoBranchesParams = RestEndpointMethodTypes['repos']['compareCommits']['parameters']
+type CompareTwoBranchesResponse = RestEndpointMethodTypes['repos']['compareCommits']['response']
+
+export type OrganizationRepos = ReposListForOrgResponseData
 
 export default class GithubService {
   private githubService: Octokit
@@ -15,7 +17,7 @@ export default class GithubService {
     this.githubService = new Octokit({ auth: accessToken })
   }
 
-  async getAllOrganizationRepos(organization: string): Promise<ReposListForOrgResponseData> {
+  async getAllOrganizationRepos(organization: string): Promise<OrganizationRepos> {
     const allRepos = []
     let canFetchMoreData = true
 
@@ -36,7 +38,7 @@ export default class GithubService {
     return allRepos
   }
 
-  compareTwoBranches(params: compareTwoBranchesParams): Promise<compareTwoBranchesResponse> {
+  compareTwoBranches(params: CompareTwoBranchesParams): Promise<CompareTwoBranchesResponse> {
     return this.githubService.repos.compareCommits(params)
   }
 }
