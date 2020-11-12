@@ -1,6 +1,7 @@
 import moment from 'moment'
 import GithubService, { OrganizationRepos } from './services/github-service'
 import SlackBotService from './services/slackbot-service'
+import handlePromise from './helpers/handle-promise'
 
 type RepoInfo = {
   repoName: string
@@ -46,72 +47,75 @@ export default class RCBot {
   public async checkBranches(): Promise<void> {
     console.log('\nStart running checkBranches script \n')
 
-    try {
-      const allOrganizationRepos = await this.githubService.getAllOrganizationRepos(
-        this.config.organization
+    const [allOrganizationRepos, error] = await handlePromise(
+      this.githubService.getAllOrganizationRepos(this.config.organization)
+    )
+
+    if (error) {
+      await this.slackBotService.postMessageToReminderChannel(
+        'Something went wrong during fetching organization repos :('
       )
-
-      if (!allOrganizationRepos.length) {
-        await this.slackBotService.postMessageToReminderChannel(
-          'Organization do not have any repos :('
-        )
-        return
-      }
-
-      const infosFromAffectedBranches = await this.getInfosFromAffectedBranches(
-        allOrganizationRepos
-      )
-
-      const canSkipSendingSuccessMessage =
-        !infosFromAffectedBranches.length && !this.config.sendAllSuccessConfirmation
-
-      if (canSkipSendingSuccessMessage) return
-
-      if (!infosFromAffectedBranches.length) {
-        const goodJobMessage = 'All your repos are looking well. Good job team :)'
-        await this.slackBotService.postMessageToReminderChannel(goodJobMessage)
-        return
-      }
-
-      const reminderMessage = this.getReminderMessage(infosFromAffectedBranches)
-      await this.slackBotService.postMessageToReminderChannel(reminderMessage)
-    } catch (e) {
-      await this.slackBotService.postMessageToReminderChannel('Something went wrong :(')
+      return
     }
+
+    if (!allOrganizationRepos.length) {
+      await this.slackBotService.postMessageToReminderChannel(
+        'Organization do not have any repos :('
+      )
+      return
+    }
+
+    const infosFromAffectedBranches = await this.getInfosFromAffectedBranches(allOrganizationRepos)
+
+    const canSkipSendingSuccessMessage =
+      !infosFromAffectedBranches.length && !this.config.sendAllSuccessConfirmation
+
+    if (canSkipSendingSuccessMessage) return
+
+    if (!infosFromAffectedBranches.length) {
+      const goodJobMessage = 'All your repos are looking well. Good job team :)'
+      await this.slackBotService.postMessageToReminderChannel(goodJobMessage)
+      return
+    }
+
+    const reminderMessage = this.getReminderMessage(infosFromAffectedBranches)
+    await this.slackBotService.postMessageToReminderChannel(reminderMessage)
   }
 
   private async getInfosFromAffectedBranches(repos: OrganizationRepos): Promise<RepoInfo[]> {
     const allBranchesResponses = repos.map(async (repo) => {
-      if (repo.archived) return null
+      if (repo.archived) return
 
-      try {
-        const compareData = await this.githubService.compareTwoBranches({
+      const [compareData, error] = await handlePromise(
+        this.githubService.compareTwoBranches({
           owner: repo.owner.login,
           repo: repo.name,
           base: this.config.baseBranch,
           head: this.config.headBranch
         })
+      )
 
-        const { files = [], commits: rawCommits = [] } = compareData.data
+      if (error) return
 
-        if (!files.length) return null
+      const { files = [], commits: rawCommits = [] } = compareData.data
 
-        const commits = rawCommits.filter((commit) => commit.commit.committer.name !== 'Github')
-        const allAuthors = commits.map((commit) => commit?.author?.login).filter(Boolean)
-        const authors = [...new Set(allAuthors)]
+      if (!files.length) return
 
-        const current = moment()
-        const past = moment(commits[0].commit.committer.date)
-        const firstCommitDelay = current.diff(past, 'days')
+      const commits = rawCommits.filter((rawCommit) => rawCommit.commit.committer.name !== 'Github')
+      const allAuthors = commits.map((commit) => commit?.author?.login).filter(Boolean)
+      const authors = [...new Set(allAuthors)]
 
-        return {
-          repoName: repo.name,
-          commitsCount: commits.length,
-          authors,
-          delay: firstCommitDelay
-        }
-      } catch (e) {
-        return null
+      if (!commits.length) return
+
+      const current = moment()
+      const past = moment(commits[0].commit.committer.date)
+      const firstCommitDelay = current.diff(past, 'days')
+
+      return {
+        repoName: repo.name,
+        commitsCount: commits.length,
+        authors,
+        delay: firstCommitDelay
       }
     })
 
