@@ -10950,26 +10950,29 @@ class RCBot {
         this.validateConfigValues(config);
     }
     validateConfigValues(config) {
-        if (!config.organization.length) {
-            throw new Error('organization is empty :(');
+        const validationMessage = this.getFirstTrueProperty({
+            'organization is empty :(': !config.organization.length,
+            'headBranch is empty :(': !config.headBranch.length,
+            'baseBranch is empty :(': !config.baseBranch.length
+        });
+        if (validationMessage) {
+            throw new Error(validationMessage);
         }
-        if (!config.headBranch.length) {
-            throw new Error('headBranch is empty :(');
-        }
-        if (!config.baseBranch.length) {
-            throw new Error('baseBranch is empty :(');
-        }
+    }
+    getFirstTrueProperty(errorObject) {
+        const [errorMessage] = Object.entries(errorObject).find((entry) => entry[1]) || [];
+        return errorMessage;
     }
     checkBranches() {
         return __awaiter(this, void 0, void 0, function* () {
             console.log('\nStart running checkBranches script \n');
             const [allOrganizationRepos, error] = yield handle_promise_1.default(this.githubService.getAllOrganizationRepos(this.config.organization));
-            if (error) {
-                yield this.slackBotService.postMessageToReminderChannel('Something went wrong during fetching organization repos :(');
-                return;
-            }
-            if (!allOrganizationRepos.length) {
-                yield this.slackBotService.postMessageToReminderChannel('Organization do not have any repos :(');
+            const validationMessage = this.getFirstTrueProperty({
+                'Something went wrong during fetching organization repos :(': !!error,
+                'Organization do not have any repos :(': !(allOrganizationRepos === null || allOrganizationRepos === void 0 ? void 0 : allOrganizationRepos.length)
+            });
+            if (validationMessage) {
+                yield this.slackBotService.postMessageToReminderChannel(validationMessage);
                 return;
             }
             const infosFromAffectedBranches = yield this.getInfosFromAffectedBranches(allOrganizationRepos);

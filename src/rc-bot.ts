@@ -17,6 +17,8 @@ type RCBotConfig = {
   sendAllSuccessConfirmation?: boolean
 }
 
+type ErrorObject = { [key: string]: boolean }
+
 export default class RCBot {
   constructor(
     private config: RCBotConfig,
@@ -31,17 +33,20 @@ export default class RCBot {
   }
 
   private validateConfigValues(config: RCBotConfig): void {
-    if (!config.organization.length) {
-      throw new Error('organization is empty :(')
-    }
+    const validationMessage = this.getFirstTrueProperty({
+      'organization is empty :(': !config.organization.length,
+      'headBranch is empty :(': !config.headBranch.length,
+      'baseBranch is empty :(': !config.baseBranch.length
+    })
 
-    if (!config.headBranch.length) {
-      throw new Error('headBranch is empty :(')
+    if (validationMessage) {
+      throw new Error(validationMessage)
     }
+  }
 
-    if (!config.baseBranch.length) {
-      throw new Error('baseBranch is empty :(')
-    }
+  private getFirstTrueProperty(errorObject: ErrorObject): string {
+    const [errorMessage] = Object.entries(errorObject).find((entry) => entry[1]) || []
+    return errorMessage
   }
 
   public async checkBranches(): Promise<void> {
@@ -51,17 +56,13 @@ export default class RCBot {
       this.githubService.getAllOrganizationRepos(this.config.organization)
     )
 
-    if (error) {
-      await this.slackBotService.postMessageToReminderChannel(
-        'Something went wrong during fetching organization repos :('
-      )
-      return
-    }
+    const validationMessage = this.getFirstTrueProperty({
+      'Something went wrong during fetching organization repos :(': !!error,
+      'Organization do not have any repos :(': !allOrganizationRepos?.length
+    })
 
-    if (!allOrganizationRepos.length) {
-      await this.slackBotService.postMessageToReminderChannel(
-        'Organization do not have any repos :('
-      )
+    if (validationMessage) {
+      await this.slackBotService.postMessageToReminderChannel(validationMessage)
       return
     }
 
