@@ -82,7 +82,7 @@ export default class RCBot {
 
   private async getInfosFromAffectedBranches(repos: OrganizationRepos): Promise<RepoInfo[]> {
     const allBranchesResponses = repos.map(async (repo) => {
-      const [compareData, error] = await handlePromise(
+      const [compareData] = await handlePromise(
         this.githubService.compareTwoBranches({
           owner: repo.owner.login,
           repo: repo.name,
@@ -91,9 +91,7 @@ export default class RCBot {
         })
       )
 
-      if (error) return
-
-      const { files = [], commits: rawCommits = [] } = compareData.data
+      const { files = [], commits: rawCommits = [] } = compareData?.data || {}
       const commits = rawCommits.filter((rawCommit) => rawCommit.commit.committer.name !== 'Github')
       const allAuthors = commits.map((commit) => commit?.author?.login).filter(Boolean)
       const authors = [...new Set(allAuthors)]

@@ -1,4 +1,4 @@
-export default async function handlePromise<T>(promise: Promise<T>): Promise<[T, string?]> {
+export default async function handlePromise<T>(promise: Promise<T>): Promise<[T?, string?]> {
   try {
     const value = await promise
     return [value]
