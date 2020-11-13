@@ -10990,8 +10990,6 @@ class RCBot {
     getInfosFromAffectedBranches(repos) {
         return __awaiter(this, void 0, void 0, function* () {
             const allBranchesResponses = repos.map((repo) => __awaiter(this, void 0, void 0, function* () {
-                if (repo.archived)
-                    return;
                 const [compareData, error] = yield handle_promise_1.default(this.githubService.compareTwoBranches({
                     owner: repo.owner.login,
                     repo: repo.name,
@@ -11001,12 +10999,11 @@ class RCBot {
                 if (error)
                     return;
                 const { files = [], commits: rawCommits = [] } = compareData.data;
-                if (!files.length)
-                    return;
                 const commits = rawCommits.filter((rawCommit) => rawCommit.commit.committer.name !== 'Github');
                 const allAuthors = commits.map((commit) => { var _a; return (_a = commit === null || commit === void 0 ? void 0 : commit.author) === null || _a === void 0 ? void 0 : _a.login; }).filter(Boolean);
                 const authors = [...new Set(allAuthors)];
-                if (!commits.length)
+                const hasDataToProcess = files.length && commits.length && !repo.archived;
+                if (!hasDataToProcess)
                     return;
                 const current = moment_1.default();
                 const past = moment_1.default(commits[0].commit.committer.date);
