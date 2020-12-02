@@ -36,11 +36,21 @@ jobs:
       - name: Trigger script to send proper slack message
         uses: sztadii/rc-reminder-bot@1
         with:
-          ORGANIZATION_NAME: ${{ secrets.ORGANIZATION_NAME }}
+          ORGANIZATION_NAME: 'facebook'
           BASE_BRANCH: develop
           HEAD_BRANCH: master
+
+          # If our repo is public we can use already available GITHUB_TOKEN
+          # GH_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # If is private we need to create own access token
           GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+
           SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
+
+          # To avoid too many notifications on slack channel we create below flag
+          # If the flag is true then we will send the notification even if all repos are fine
+          # But when flag is false then we will send the notification only if some repos need to be updated
           # Expected values [ true, false ]
           SEND_ALL_SUCCESS_CONFIRMATION: true
 ```
@@ -64,7 +74,8 @@ https://hooks.slack.com/services/aaa/bbb/ccc
 
 ## How get GH_ACCESS_TOKEN
 
-If our repos are private we cannot use GITHUB_TOKEN from github actions env, so we need to create own token. <br/>
+To get GH_ACCESS_TOKEN we can use GITHUB_TOKEN env already available in secrets or create our own. <br/>
+If our repo is private we cannot use GITHUB_TOKEN from github actions, so we need to create own token. <br/>
 At first, you need visit the [LINK](https://github.com/settings/tokens). <br/>
 Then you need to generate new token. <br/>
 So you need to name it and give particular permissions. <br/>
