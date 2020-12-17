@@ -52,7 +52,7 @@ jobs:
           # If the flag is true then we will send the notification even if all repos are fine
           # But when flag is false then we will send the notification only if some repos need to be updated
           # Expected values [ true, false ]
-          SEND_ALL_SUCCESS_CONFIRMATION: true
+          SEND_NOTIFICATION_EVEN_ALL_SUCCESS: true
 ```
 
 ## Expected result:

@@ -162,7 +162,7 @@ describe('RCBot', () => {
         organization: 'Spotify',
         baseBranch: 'develop',
         headBranch: 'master',
-        sendAllSuccessConfirmation: false
+        sendNotificationEvenAllSuccess: false
       },
       githubService,
       slackBotService

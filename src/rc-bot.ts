@@ -14,7 +14,7 @@ type RCBotConfig = {
   baseBranch: string
   headBranch: string
   organization: string
-  sendAllSuccessConfirmation?: boolean
+  sendNotificationEvenAllSuccess?: boolean
 }
 
 type ErrorObject = { [key: string]: boolean }
@@ -27,7 +27,7 @@ export default class RCBot {
   ) {
     this.config = {
       ...config,
-      sendAllSuccessConfirmation: config.sendAllSuccessConfirmation ?? true
+      sendNotificationEvenAllSuccess: config.sendNotificationEvenAllSuccess ?? true
     }
     this.validateConfigValues(config)
   }
@@ -74,7 +74,7 @@ export default class RCBot {
       return
     }
 
-    if (!this.config.sendAllSuccessConfirmation) return
+    if (!this.config.sendNotificationEvenAllSuccess) return
 
     const goodJobMessage = 'All your repos are looking well. Good job team :)'
     await this.slackBotService.postMessageToReminderChannel(goodJobMessage)
