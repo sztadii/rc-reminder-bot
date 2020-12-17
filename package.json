@@ -73,5 +73,42 @@
       "^.+\\.(js|ts)$": "babel-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.ts?$"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "singleQuote": true,
+    "trailingComma": "none",
+    "semi": false,
+    "printWidth": 100
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "jest"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:jest/recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "env": {
+      "node": true,
+      "jest": true,
+      "es6": true
+    },
+    "rules": {
+      "no-console": "off"
+    }
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-typescript"
+    ],
+    "plugins": [
+      "@babel/plugin-transform-runtime",
+      "@babel/plugin-proposal-class-properties"
+    ]
   }
 }
