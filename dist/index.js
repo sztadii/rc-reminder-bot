@@ -10330,7 +10330,7 @@ function run() {
         organization: getInputValue('ORGANIZATION_NAME'),
         baseBranch: getInputValue('BASE_BRANCH'),
         headBranch: getInputValue('HEAD_BRANCH'),
-        sendAllSuccessConfirmation: getInputValue('SEND_ALL_SUCCESS_CONFIRMATION') === 'true'
+        sendNotificationEvenAllSuccess: getInputValue('SEND_NOTIFICATION_EVEN_ALL_SUCCESS') === 'true'
     }, new github_service_1.default(getInputValue('GH_ACCESS_TOKEN')), new slackbot_service_1.default(getInputValue('SLACK_CHANNEL_WEBHOOK_URL'), isProduction));
     rcBot.checkBranches();
 }
@@ -10946,7 +10946,7 @@ class RCBot {
         this.config = config;
         this.githubService = githubService;
         this.slackBotService = slackBotService;
-        this.config = Object.assign(Object.assign({}, config), { sendAllSuccessConfirmation: (_a = config.sendAllSuccessConfirmation) !== null && _a !== void 0 ? _a : true });
+        this.config = Object.assign(Object.assign({}, config), { sendNotificationEvenAllSuccess: (_a = config.sendNotificationEvenAllSuccess) !== null && _a !== void 0 ? _a : true });
         this.validateConfigValues(config);
     }
     validateConfigValues(config) {
@@ -10981,7 +10981,7 @@ class RCBot {
                 yield this.slackBotService.postMessageToReminderChannel(reminderMessage);
                 return;
             }
-            if (!this.config.sendAllSuccessConfirmation)
+            if (!this.config.sendNotificationEvenAllSuccess)
                 return;
             const goodJobMessage = 'All your repos are looking well. Good job team :)';
             yield this.slackBotService.postMessageToReminderChannel(goodJobMessage);

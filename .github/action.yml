@@ -20,6 +20,9 @@ inputs:
   SLACK_CHANNEL_WEBHOOK_URL:
     description: 'URL to slack channel webhook'
     required: true
+  SEND_NOTIFICATION_EVEN_ALL_SUCCESS:
+    description: 'If all repos are correct should we still sent the notification?'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'
