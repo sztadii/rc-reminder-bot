@@ -101,7 +101,7 @@ In this way we will be able to run our script locally with real data. <br />
 At first please install NodeJS on your machine, after that please run below commands:
 
 ```
-npm ci
+npm install
 npm run start-dev
 ```
 
@@ -110,6 +110,6 @@ npm run start-dev
 At first please install NodeJS on your machine, after that please run below commands:
 
 ```
-npm ci
+npm install
 npm run start-prod
 ```
