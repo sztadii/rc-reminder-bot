@@ -24,7 +24,11 @@ describe('RCBot', () => {
     slackBotService.postMessageToReminderChannel = jest.fn()
   })
 
-  function mockAllValues(allRepos, firstCompare = undefined, secondCompare = undefined) {
+  function mockServicesMethodsOutput(
+    allRepos,
+    firstCompare = undefined,
+    secondCompare = undefined
+  ) {
     jest.spyOn(githubService, 'getAllOrganizationRepos').mockImplementationOnce(() => allRepos)
     jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => firstCompare)
     jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => secondCompare)
@@ -51,7 +55,7 @@ describe('RCBot', () => {
       }
     }
 
-    mockAllValues(allRepos, firstBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff)
 
     rcBot = new RCBot(
       {
@@ -118,7 +122,7 @@ describe('RCBot', () => {
       }
     }
 
-    mockAllValues(allRepos, firstBranchDiff, secondBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff, secondBranchDiff)
 
     await rcBot.checkBranches()
 
@@ -142,7 +146,7 @@ describe('RCBot', () => {
     const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
     const firstBranchDiff = { data: { files: [] } }
 
-    mockAllValues(allRepos, firstBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff)
 
     await rcBot.checkBranches()
 
@@ -155,7 +159,7 @@ describe('RCBot', () => {
     const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
     const firstBranchDiff = { data: { files: [] } }
 
-    mockAllValues(allRepos, firstBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff)
 
     rcBot = new RCBot(
       {
@@ -174,7 +178,7 @@ describe('RCBot', () => {
   })
 
   it('send error message when something went wrong during fetching organization repos', async () => {
-    mockAllValues(Promise.reject('500'))
+    mockServicesMethodsOutput(Promise.reject('500'))
 
     await rcBot.checkBranches()
 
@@ -208,7 +212,7 @@ describe('RCBot', () => {
       }
     }
 
-    mockAllValues(allRepos, firstBranchDiff, firstBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff, firstBranchDiff)
 
     await rcBot.checkBranches()
 
@@ -245,7 +249,7 @@ describe('RCBot', () => {
       }
     }
 
-    mockAllValues(allRepos, firstBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff)
 
     rcBot = new RCBot(
       {
@@ -291,7 +295,7 @@ describe('RCBot', () => {
       }
     }
 
-    mockAllValues(allRepos, firstBranchDiff)
+    mockServicesMethodsOutput(allRepos, firstBranchDiff)
 
     await rcBot.checkBranches()
 
@@ -400,7 +404,7 @@ describe('RCBot', () => {
       }
     }
 
-    mockAllValues(allRepos, branchDiffWithOnlyPullRequestCommit, secondBranchDiff)
+    mockServicesMethodsOutput(allRepos, branchDiffWithOnlyPullRequestCommit, secondBranchDiff)
 
     await rcBot.checkBranches()
 
@@ -417,9 +421,7 @@ describe('RCBot', () => {
   })
 
   it('send message to the slack channel when organization do not have any repos', async () => {
-    const allRepos = []
-
-    mockAllValues(allRepos, null, null)
+    mockServicesMethodsOutput([])
 
     await rcBot.checkBranches()
 
