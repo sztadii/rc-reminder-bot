@@ -5,10 +5,10 @@
     "start-dev": "npm run env-file-verification && npm run exec-dev",
     "start-prod": "npm run env-file-verification && npm run build-and-pack && npm run exec-prod",
     "env-file-verification": "node env-file-verification.js",
-    "build-and-pack": "npm run clean && npm run build && npm run pack && :",
-    "clean": "rm dist/index.js && rm -rf lib",
-    "pack": "ncc build lib/index.js",
-    "build": "tsc",
+    "rebuild": "npm run clean && npm run build",
+    "clean": "rm -rf lib",
+    "build": "tsc --project tsconfig.build.json",
+    "types-check": "tsc",
     "exec-dev": "ts-node-dev --respawn --transpile-only -r dotenv/config src/index.ts",
     "exec-prod": "NODE_ENV=production node -r dotenv/config dist/index.js",
     "format": "prettier --ignore-path .gitignore --write \"**/*.{ts,md,json}\"",
@@ -38,7 +38,6 @@
     "@types/node": "^14.6.1",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
-    "@zeit/ncc": "^0.22.3",
     "babel-jest": "^26.3.0",
     "eslint": "^7.7.0",
     "eslint-plugin-jest": "^23.20.0",
@@ -56,9 +55,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "npm run lint",
-      "npm run build-and-pack",
-      "git add dist"
+      "npm run lint"
     ],
     "*.{ts,md,json}": [
       "npm run format"
