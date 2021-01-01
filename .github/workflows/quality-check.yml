@@ -15,6 +15,11 @@ jobs:
       - name: Dependency instalation
         run: npm ci
 
+      # I split types check and build to two different command,
+      # because I do not want to have tests in docker container
+      - name: Checking typescript types
+        run: npm run types-check
+
       - name: Linting
         run: npm run lint
 

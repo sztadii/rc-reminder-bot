@@ -1,9 +1,6 @@
-name: Daily job
+name: Run action
 
-on:
-  schedule:
-    # To set specific time please check https://crontab.guru
-    - cron:  '0 6 * * *'
+on: [push]
 
 jobs:
   trigger:
