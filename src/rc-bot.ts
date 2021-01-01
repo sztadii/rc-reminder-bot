@@ -29,14 +29,14 @@ export default class RCBot {
       ...config,
       sendNotificationEvenAllSuccess: config.sendNotificationEvenAllSuccess ?? true
     }
-    this.validateConfigValues(config)
+    this.validateConfigValues()
   }
 
-  private validateConfigValues(config: RCBotConfig): void {
+  private validateConfigValues(): void {
     const validationMessage = this.getFirstTrueProperty({
-      'organization is empty :(': !config.organization.length,
-      'headBranch is empty :(': !config.headBranch.length,
-      'baseBranch is empty :(': !config.baseBranch.length
+      'organization is empty :(': !this.config.organization.length,
+      'headBranch is empty :(': !this.config.headBranch.length,
+      'baseBranch is empty :(': !this.config.baseBranch.length
     })
 
     if (validationMessage) {
