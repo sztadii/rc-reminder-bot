@@ -1,4 +1,4 @@
-import moment from 'moment'
+import subDays from 'date-fns/subDays'
 import RCBot from './rc-bot'
 import SlackBotService from './services/slackbot-service'
 import GithubService from './services/github-service'
@@ -96,7 +96,7 @@ describe('RCBot', () => {
             },
             commit: {
               committer: {
-                date: moment().subtract(10, 'days')
+                date: subDays(new Date(), 10)
               }
             }
           }
@@ -114,7 +114,7 @@ describe('RCBot', () => {
             },
             commit: {
               committer: {
-                date: moment().subtract(5, 'days')
+                date: subDays(new Date(), 5)
               }
             }
           }
@@ -204,7 +204,7 @@ describe('RCBot', () => {
             },
             commit: {
               committer: {
-                date: moment().subtract(666, 'days')
+                date: subDays(new Date(), 666)
               }
             }
           }
@@ -241,7 +241,7 @@ describe('RCBot', () => {
             },
             commit: {
               committer: {
-                date: moment().subtract(5, 'days')
+                date: subDays(new Date(), 5)
               }
             }
           }
@@ -287,7 +287,7 @@ describe('RCBot', () => {
             },
             commit: {
               committer: {
-                date: moment()
+                date: new Date()
               }
             }
           }
@@ -396,7 +396,7 @@ describe('RCBot', () => {
             },
             commit: {
               committer: {
-                date: moment().subtract(5, 'days')
+                date: subDays(new Date(), 5)
               }
             }
           }
