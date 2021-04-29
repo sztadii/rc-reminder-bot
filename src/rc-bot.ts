@@ -1,4 +1,4 @@
-import moment from 'moment'
+import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
 import GithubService, { OrganizationRepos } from './services/github-service'
 import SlackBotService from './services/slackbot-service'
 import handlePromise from './helpers/handle-promise'
@@ -99,15 +99,17 @@ export default class RCBot {
 
       if (!hasDataToProcess) return
 
-      const current = moment()
-      const past = moment(commits[0].commit.committer.date)
-      const firstCommitDelay = current.diff(past, 'days')
+      // TODO Create separate function to get current date and allow to mock returned value
+      // It will improve the way that we test the app
+      const current = new Date()
+      const past = new Date(commits[0].commit.committer.date)
+      const firstCommitDelayInDays = differenceInCalendarDays(current, past)
 
       return {
         repoName: repo.name,
         commitsCount: commits.length,
         authors,
-        delay: firstCommitDelay
+        delay: firstCommitDelayInDays
       }
     })
 
