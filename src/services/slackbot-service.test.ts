@@ -14,17 +14,27 @@ describe('SlackBotService', () => {
     }).toThrow('webHookURL is empty :(')
   })
 
-  it('make http call when isProduction flag is true', () => {
+  it('postMessageToReminderChannel will make http call by default', () => {
+    const httpHandler = jest.fn()
+    axios.post = httpHandler
+
+    const slackBotService = new SlackBotService('wp.pl')
+    slackBotService.postMessageToReminderChannel('Some message')
+
+    expect(httpHandler).not.toBeCalled()
+  })
+
+  it('when isProduction flag is true, then postMessageToReminderChannel will make http call', () => {
     const httpHandler = jest.fn()
     axios.post = httpHandler
 
     const slackBotService = new SlackBotService('wp.pl', true)
     slackBotService.postMessageToReminderChannel('Some message')
 
-    expect(httpHandler).toBeCalled()
+    expect(httpHandler).toBeCalledTimes(1)
   })
 
-  it('do not make http call when isProduction flag is false', () => {
+  it('when isProduction flag is false, then postMessageToReminderChannel will not make http call', () => {
     const httpHandler = jest.fn()
     axios.post = httpHandler
 
