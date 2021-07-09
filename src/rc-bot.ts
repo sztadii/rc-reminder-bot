@@ -1,7 +1,7 @@
 import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
 import GithubService, { OrganizationRepos } from './services/github-service'
 import SlackBotService from './services/slackbot-service'
-import { handlePromise } from './helpers'
+import { handlePromise, getFirstTrueProperty } from './helpers'
 
 type RepoInfo = {
   repoName: string
@@ -17,8 +17,6 @@ type RCBotConfig = {
   sendNotificationEvenAllSuccess?: boolean
 }
 
-type ErrorObject = { [key: string]: boolean }
-
 export default class RCBot {
   constructor(
     private config: RCBotConfig,
@@ -33,7 +31,7 @@ export default class RCBot {
   }
 
   private validateConfigValues(): void {
-    const validationMessage = this.getFirstTrueProperty({
+    const validationMessage = getFirstTrueProperty({
       'organization is empty :(': !this.config.organization.length,
       'headBranch is empty :(': !this.config.headBranch.length,
       'baseBranch is empty :(': !this.config.baseBranch.length
@@ -44,11 +42,6 @@ export default class RCBot {
     }
   }
 
-  private getFirstTrueProperty(errorObject: ErrorObject): string {
-    const [errorMessage] = Object.entries(errorObject).find((entry) => entry[1]) || []
-    return errorMessage
-  }
-
   public async checkBranches(): Promise<void> {
     console.log('\nStart running checkBranches script \n')
 
@@ -56,7 +49,7 @@ export default class RCBot {
       this.githubService.getAllOrganizationRepos(this.config.organization)
     )
 
-    const validationMessage = this.getFirstTrueProperty({
+    const validationMessage = getFirstTrueProperty({
       'Something went wrong during fetching organization repos :(': !!error,
       'Organization do not have any repos :(': !allOrganizationRepos?.length
     })
