@@ -1,7 +1,7 @@
 import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
 import GithubService, { OrganizationRepos } from './services/github-service'
 import SlackBotService from './services/slackbot-service'
-import handlePromise from './helpers/handle-promise'
+import { handlePromise } from './helpers'
 
 type RepoInfo = {
   repoName: string
