@@ -8,9 +8,9 @@ export async function handlePromise<T>(promise: Promise<T>): Promise<[T?, string
   }
 }
 
-type ErrorObject = { [key: string]: boolean }
+type ObjectWithMessages = { [message: string]: boolean }
 
-export function getFirstTrueProperty(errorObject: ErrorObject): string {
-  const [errorMessage] = Object.entries(errorObject).find((entry) => entry[1]) || []
-  return errorMessage
+export function getFirstTrueProperty(object: ObjectWithMessages): string {
+  const [message] = Object.entries(object).find((entry) => entry[1]) || []
+  return message
 }
