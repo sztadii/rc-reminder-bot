@@ -1,7 +1,11 @@
 import axios from 'axios'
 
 export default class SlackBotService {
-  constructor(private webHookURL: string, private isProduction = false) {
+  constructor(
+    private webHookURL: string,
+    private isProduction = false,
+    private httpPostFunc = axios.post
+  ) {
     if (!webHookURL?.length) {
       throw new Error('webHookURL is empty :(')
     }
@@ -17,6 +21,6 @@ export default class SlackBotService {
       return
     }
 
-    await axios.post(this.webHookURL, { text: wrappedMessage })
+    await this.httpPostFunc(this.webHookURL, { text: wrappedMessage })
   }
 }
