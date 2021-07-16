@@ -16,7 +16,8 @@
     "lint-scripts": "eslint \"./src/**/*.ts\" --ext=\".ts\" --ignore-path .gitignore --color --max-warnings 0 --fix",
     "lint-names": "file-naming-enforcer type=kebabCase folder=./src",
     "test-watch": "jest --silent --watch",
-    "test": "jest --silent"
+    "test": "jest --silent",
+    "semantic-release": "semantic-release"
   },
   "license": "ISC",
   "dependencies": {
@@ -46,7 +47,8 @@
     "jest": "^26.4.2",
     "lint-staged": "^10.2.13",
     "prettier": "^2.1.1",
-    "ts-node-dev": "^1.0.0-pre.61"
+    "ts-node-dev": "^1.0.0-pre.61",
+    "semantic-release": "^17.4.4"
   },
   "husky": {
     "hooks": {
@@ -107,5 +109,10 @@
       "@babel/plugin-transform-runtime",
       "@babel/plugin-proposal-class-properties"
     ]
+  },
+  "version": "0.0.0-development",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sztadii/rc-reminder-bot.git"
   }
 }
