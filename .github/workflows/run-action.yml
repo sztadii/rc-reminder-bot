@@ -1,6 +1,6 @@
 name: Run action
 
-on: [push]
+on: push
 
 jobs:
   trigger:

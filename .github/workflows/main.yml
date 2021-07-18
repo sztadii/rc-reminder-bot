@@ -1,6 +1,6 @@
-name: Quality check
+name: Main workflow
 
-on: [push]
+on: push
 
 jobs:
   build:
@@ -28,3 +28,12 @@ jobs:
 
       - name: Checking typescript types and build app
         run: npm run build
+
+      - name: Checking typescript types and build app
+        run: npm run build
+
+      # semantic-release release only from master branch, so do not be worry
+      - name: Publish to Github Marketplace
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
