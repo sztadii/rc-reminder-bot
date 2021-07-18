@@ -17,7 +17,7 @@ I hope this bot will solve it, because it will be reminding about that changes o
 ## How to use:
 
 At first, we need to create a new workflow. <br />
-So please create a file inside .github/workflows folder. <br />
+So please create a file inside `.github/workflows` folder. <br />
 For example: `.github/workflow/daily-job.yml` <br />
 The file content should look similar to below example, but feel free to use own.
 
