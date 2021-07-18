@@ -12,7 +12,7 @@ If you will forget and someone overrides your changes then you got git conflicts
 When you are making a lot of deployments to production with a lot of minor fixes the problem is getting bigger, <br />
 cause a lot of time you will be spending on resolving conflicts. <br />
 Of course well tested app should at least reduce the problem, but the life is brutal, not all companies cover their code that well like me :D <br />
-I hope this bot will solve it, cause it will be reminding about that changes on a slack channel.
+I hope this bot will solve it, because it will be reminding about that changes on a slack channel.
 
 ## How to use:
 
