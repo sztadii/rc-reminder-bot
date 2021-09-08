@@ -24,18 +24,8 @@ describe('RCBot', () => {
     slackBotService.postMessageToReminderChannel = jest.fn()
   })
 
-  function mockServicesMethodsOutput(
-    allRepos,
-    firstCompare = undefined,
-    secondCompare = undefined
-  ) {
-    jest.spyOn(githubService, 'getAllOrganizationRepos').mockImplementationOnce(() => allRepos)
-    jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => firstCompare)
-    jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => secondCompare)
-  }
-
   it('call githubService with arguments passed as a config', async () => {
-    const allRepos = [{ name: 'typescript', owner: { login: 'Github' } }]
+    const allRepos = [{ name: 'typescript', owner: { login: 'CleverDevelopment' } }]
 
     const firstBranchDiff = {
       data: {
@@ -59,7 +49,7 @@ describe('RCBot', () => {
 
     rcBot = new RCBot(
       {
-        organization: 'Github',
+        organization: 'CleverDevelopment',
         baseBranch: 'replica',
         headBranch: 'main'
       },
@@ -69,13 +59,13 @@ describe('RCBot', () => {
     await rcBot.checkBranches()
 
     expect(githubService.getAllOrganizationRepos).toHaveBeenCalledTimes(1)
-    expect(githubService.getAllOrganizationRepos).toHaveBeenCalledWith('Github')
+    expect(githubService.getAllOrganizationRepos).toHaveBeenCalledWith('CleverDevelopment')
 
     expect(githubService.compareTwoBranches).toHaveBeenCalledTimes(1)
     expect(githubService.compareTwoBranches).toHaveBeenCalledWith({
       base: 'replica',
       head: 'main',
-      owner: 'Github',
+      owner: 'CleverDevelopment',
       repo: 'typescript'
     })
   })
@@ -218,14 +208,13 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
-    const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
-      '-----------------\n' +
-      'Repo: react\n' +
-      'Author of not updated commit: Thor\n' +
-      'Delay: 666 days\n'
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
+      expect.stringContaining('react')
+    )
 
-    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).not.toHaveBeenCalledWith(
+      expect.stringContaining('angular-js')
+    )
   })
 
   it('works well with different branches', async () => {
@@ -264,14 +253,9 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
-    const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MAIN TO REPLICA BRANCH.\n' +
-      '-----------------\n' +
-      'Repo: react\n' +
-      'Author of not updated commit: Batman\n' +
-      'Delay: 5 days\n'
-
-    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
+      expect.stringContaining('PLEASE MERGE MAIN TO REPLICA BRANCH')
+    )
   })
 
   it('do not display commits delay in slack message if is equal 0', async () => {
@@ -301,13 +285,7 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
-    const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
-      '-----------------\n' +
-      'Repo: react\n' +
-      'Author of not updated commit: Capitan America\n'
-
-    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).not.toHaveBeenCalledWith('Delay')
   })
 
   it('throw an error if required dependencies are missing', () => {
@@ -410,14 +388,13 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
-    const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
-      '-----------------\n' +
-      'Repo: typescript\n' +
-      'Author of not updated commit: Hulk\n' +
-      'Delay: 5 days\n'
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
+      expect.stringContaining('Repo: typescript')
+    )
 
-    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+    expect(slackBotService.postMessageToReminderChannel).not.toHaveBeenCalledWith(
+      expect.stringContaining('Repo: react')
+    )
   })
 
   it('send message to the slack channel when organization do not have any repos', async () => {
@@ -431,4 +408,14 @@ describe('RCBot', () => {
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
   })
+
+  function mockServicesMethodsOutput(
+    allRepos,
+    firstCompare = undefined,
+    secondCompare = undefined
+  ) {
+    jest.spyOn(githubService, 'getAllOrganizationRepos').mockImplementationOnce(() => allRepos)
+    jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => firstCompare)
+    jest.spyOn(githubService, 'compareTwoBranches').mockImplementationOnce(() => secondCompare)
+  }
 })
