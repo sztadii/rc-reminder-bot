@@ -119,7 +119,7 @@ describe('RCBot', () => {
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
 
     const expectedMessage =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
+      '2 REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. PLEASE MERGE MASTER TO DEVELOP BRANCH.\n' +
       '-----------------\n' +
       'Repo: react\n' +
       'Author of not updated commit: Iron Man\n' +
@@ -130,6 +130,73 @@ describe('RCBot', () => {
       'Delay: 5 days\n'
 
     expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(expectedMessage)
+  })
+
+  it('when organization has many repos then display proper heading', async () => {
+    const allRepos = [
+      { name: 'react', owner: { login: 'facebook' } },
+      { name: 'typescript', owner: { login: 'microsoft' } }
+    ]
+
+    const branchDiff = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Iron Man'
+            },
+            commit: {
+              committer: {
+                date: subDays(new Date(), 10)
+              }
+            }
+          }
+        ]
+      }
+    }
+
+    mockServicesMethodsOutput(allRepos, branchDiff, branchDiff)
+
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
+      expect.stringContaining('2 REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY.')
+    )
+  })
+
+  it('when organization has a one repo then display proper heading', async () => {
+    const allRepos = [{ name: 'react', owner: { login: 'facebook' } }]
+
+    const firstBranchDiff = {
+      data: {
+        files: ['some.js'],
+        commits: [
+          {
+            author: {
+              login: 'Iron Man'
+            },
+            commit: {
+              committer: {
+                date: subDays(new Date(), 10)
+              }
+            }
+          }
+        ]
+      }
+    }
+
+    mockServicesMethodsOutput(allRepos, firstBranchDiff)
+
+    await rcBot.checkBranches()
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledTimes(1)
+
+    expect(slackBotService.postMessageToReminderChannel).toHaveBeenCalledWith(
+      expect.stringContaining('REPOSITORY LISTED BELOW IS NOT UPDATED PROPERLY.')
+    )
   })
 
   it('send `good job` message if all repos are correctly updated', async () => {

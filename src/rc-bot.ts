@@ -111,9 +111,13 @@ export default class RCBot {
   }
 
   private getReminderMessage(repos: RepoInfo[]): string {
-    let message =
-      'REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. ' +
-      `PLEASE MERGE ${this.config.headBranch.toUpperCase()} TO ${this.config.baseBranch.toUpperCase()} BRANCH.\n`
+    const repositoryHeading =
+      repos.length > 1
+        ? `${repos.length} REPOSITORIES LISTED BELOW ARE NOT UPDATED PROPERLY. `
+        : `REPOSITORY LISTED BELOW IS NOT UPDATED PROPERLY. `
+    const branchesMessage = `PLEASE MERGE ${this.config.headBranch.toUpperCase()} TO ${this.config.baseBranch.toUpperCase()} BRANCH.\n`
+
+    let message = repositoryHeading + branchesMessage
 
     repos.forEach((repo) => {
       const { authors, repoName, commitsCount } = repo
