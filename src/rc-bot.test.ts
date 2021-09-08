@@ -70,6 +70,7 @@ describe('RCBot', () => {
     })
   })
 
+  // TODO split the tests to smaller cases
   it('send message to the slack channel about not updated repositories', async () => {
     const allRepos = [
       { name: 'react', owner: { login: 'facebook' } },
