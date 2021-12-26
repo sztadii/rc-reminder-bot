@@ -13,9 +13,10 @@
     "exec-dev": "ts-node-dev --respawn --transpile-only -r dotenv/config src/index.ts",
     "exec-prod": "NODE_ENV=production node -r dotenv/config dist/index.js",
     "format": "prettier --ignore-path .gitignore --write \"**/*.{ts,md,json}\"",
-    "lint": "npm run lint-scripts && npm run lint-names",
+    "lint": "npm run lint-scripts && npm run lint-names && npm run lint-types",
     "lint-scripts": "eslint \"./src/**/*.ts\" --ext=\".ts\" --ignore-path .gitignore --color --max-warnings 0 --fix",
     "lint-names": "file-naming-enforcer type=kebabCase folder=./src",
+    "lint-types": "type-coverage",
     "test-watch": "jest --silent --watch",
     "test": "jest --silent",
     "semantic-release": "semantic-release"
@@ -48,8 +49,9 @@
     "jest": "^26.4.2",
     "lint-staged": "^10.2.13",
     "prettier": "^2.1.1",
+    "semantic-release": "^17.4.4",
     "ts-node-dev": "^1.0.0-pre.61",
-    "semantic-release": "^17.4.4"
+    "type-coverage": "^2.19.0"
   },
   "husky": {
     "hooks": {
@@ -110,6 +112,10 @@
       "@babel/plugin-transform-runtime",
       "@babel/plugin-proposal-class-properties"
     ]
+  },
+  "typeCoverage": {
+    "atLeast": 98,
+    "strict": true
   },
   "version": "0.0.0-development",
   "repository": {
