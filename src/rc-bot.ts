@@ -20,8 +20,8 @@ type RCBotConfig = {
 export default class RCBot {
   constructor(
     private config: RCBotConfig,
-    private githubService: GithubService,
-    private slackBotService: SlackBotService
+    private githubService: InstanceType<typeof GithubService>,
+    private slackBotService: InstanceType<typeof SlackBotService>
   ) {
     this.config = {
       ...config,
