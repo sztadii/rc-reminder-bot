@@ -89,27 +89,29 @@ aaa-bbb-ccc-ddd-eee-fff
 
 ## Development / contribution requirements:
 
-- NodeJS ( min 12.14.1 ) for app serving and other development process
+Please install specific NodeJS version ( specified in engines.node inside the package.json ).
+I am recommending to use N - node manager from https://github.com/tj/n.
+If you decide to use N - node manager please just run:
+
+```
+n auto
+```
 
 ### Before you will start
 
-Please copy `.env.example` into `.env` file and fill with correct data <br />
+Please copy `.env.example` into `.env` file and fill with correct data. <br />
 In this way we will be able to run our script locally with real data. <br />
 
 ### How to run our application ( in development mode )
 
-At first please install NodeJS on your machine, after that please run below commands:
-
 ```
-npm install
+npm ci
 npm run start-dev
 ```
 
 ### How to run our application ( in production mode )
 
-At first please install NodeJS on your machine, after that please run below commands:
-
 ```
-npm install
+npm ci
 npm run start-prod
 ```
