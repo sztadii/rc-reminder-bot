@@ -1,4 +1,4 @@
-FROM node:14-alpine AS builder
+FROM node:14.20.0-alpine AS builder
 WORKDIR /action
 COPY package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY src/ src/
 RUN npm run build \
   && npm prune --production
 
-FROM node:14-alpine
+FROM node:14.20.0-alpine
 COPY --from=builder action/package.json .
 COPY --from=builder action/lib lib/
 COPY --from=builder action/node_modules node_modules/

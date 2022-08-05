@@ -123,6 +123,6 @@
     "url": "https://github.com/sztadii/rc-reminder-bot.git"
   },
   "engines": {
-    "node": "14.17.1"
+    "node": "14.20.0"
   }
 }
