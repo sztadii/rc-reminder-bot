@@ -121,5 +121,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/sztadii/rc-reminder-bot.git"
+  },
+  "engines": {
+    "node": "14.17.1"
   }
 }
