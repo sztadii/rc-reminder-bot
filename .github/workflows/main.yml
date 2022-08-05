@@ -7,12 +7,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 14.17.1
+      - name: Checkout to the repository
+        uses: actions/checkout@v3
 
-      - name: Dependency instalation
+      - name: Setup required Node.JS version
+        # node-version-file will support package.json file
+        # once they publish it as a stable release please uncomment the below line
+        # uses: actions/setup-node@v3
+        uses: actions/setup-node@348e00800850ca70958af8888ebdb3cce7cbcddc
+        with:
+          node-version-file: 'package.json'
+
+      - name: Dependency installation
         run: npm ci
 
       # I split types check and build to two different command,
