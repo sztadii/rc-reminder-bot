@@ -2,116 +2,112 @@
 
 ## Description:
 
-A simple bot that reminds forgetful developers of merging quick fixes from rc into develop branch
+This is a simple bot designed to remind forgetful developers about merging quick fixes from the release candidate (rc) branch into the develop branch.
 
-## Problem to solve:
+## Problem to Solve:
 
-When your company is following git-flow workflow ( or something similar ) you are familiar with quick-fix in the production branch. <br />
-So when you are going to merge your fix into master ( or another branch ) then you should merge that change also to develop ( sooner or later ) <br />
-If you will forget and someone overrides your changes then you got git conflicts ( which someone needs to solve ). <br />
-When you are making a lot of deployments to production with a lot of minor fixes the problem is getting bigger, <br />
-cause a lot of time you will be spending on resolving conflicts. <br />
-Of course well tested app should at least reduce the problem, but the life is brutal, not all companies cover their code that well like me :D <br />
-I hope this bot will solve it, because it will be reminding about that changes on a slack channel.
+In companies that follow the git-flow workflow (or similar workflows), developers often encounter quick fixes in the production branch. When merging such fixes into the main branch (e.g., master) or another relevant branch, it's essential to merge those changes into the develop branch as well, sooner or later. Failure to do so may result in conflicting changes if someone overrides your fixes. This situation leads to git conflicts that someone needs to resolve. The problem escalates when there are numerous deployments to production with multiple minor fixes, as the time spent resolving conflicts increases. While a well-tested application can mitigate this problem to some extent, the reality is that not all companies have comprehensive code coverage.
 
-## How to use:
+This bot aims to address this challenge by sending reminders about necessary changes to a Slack channel, helping developers stay on top of these merges.
 
-At first, we need to create a new workflow. <br />
-So please create a file inside `.github/workflows` folder. <br />
-For example: `.github/workflow/daily-job.yml` <br />
-The file content should look similar to below example, but feel free to use own.
+## How to Use:
 
-```
-name: Daily job
+To set up the bot, follow these steps:
 
-on:
-  schedule:
-    # To set specific time please check https://crontab.guru
-    - cron:  '0 6 * * *'
+1. Create a new workflow by adding a file inside the `.github/workflows` folder, e.g., `.github/workflows/daily-job.yml`.
 
-jobs:
-  trigger:
-    runs-on: ubuntu-latest
+2. Configure the workflow content similar to the example below:
 
-    steps:
-      - name: Trigger script to send proper slack message
-        uses: sztadii/rc-reminder-bot@1
-        with:
-          ORGANIZATION_NAME: 'facebook'
-          BASE_BRANCH: develop
-          HEAD_BRANCH: master
+   ```yaml
+   name: Daily job
 
-          # If our repo is public we can use already available GITHUB_TOKEN
-          # GH_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+   on:
+     schedule:
+       - cron: '0 6 * * *'  # Set your desired schedule
 
-          # If is private we need to create own access token
-          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+   jobs:
+     trigger:
+       runs-on: ubuntu-latest
 
-          SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
+       steps:
+         - name: Trigger script to send proper Slack message
+           uses: sztadii/rc-reminder-bot@1
+           with:
+             ORGANIZATION_NAME: 'facebook'
+             BASE_BRANCH: develop
+             HEAD_BRANCH: master
 
-          # To avoid too many notifications on slack channel we create below flag
-          # If the flag is true then we will send the notification even if all repos are fine
-          # But when flag is false then we will send the notification only if some repos need to be updated
-          # Expected values [ true, false ]
-          SEND_NOTIFICATION_EVEN_ALL_SUCCESS: true
-```
+             # Use GITHUB_TOKEN for public repos, or create your own access token for private repos
+             GH_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-## Expected result:
+             SLACK_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CHANNEL_WEBHOOK_URL }}
 
-Once everything will be set up properly then you should see below message in the slack channel <br /> <br />
+             # Set to true to send notifications even if all repos are up to date
+             SEND_NOTIFICATION_EVEN_ALL_SUCCESS: true
+   ```
+
+## Expected Result:
+
+Once you've set up everything correctly, the bot will send a message like the following to the specified Slack channel:
+
 ![Screenshot](slack-channel-screenshot.png)
 
-## How get SLACK_CHANNEL_WEBHOOK_URL
+## How to Obtain SLACK_CHANNEL_WEBHOOK_URL:
 
-To get SLACK_CHANNEL_WEBHOOK_URL you need to create slack app, so please visit the [LINK](https://api.slack.com/apps?new_app=1). <br/>
-When you will create it then you will need to click `Incoming Webhooks` link and active it. <br/>
-Then you need to create a new hook by clicking `Add New Webhook to Workspace`. <br/>
-After that you need to copy URL from sample curl. <br />
-And should look similar to:
+To get the `SLACK_CHANNEL_WEBHOOK_URL`, follow these steps:
 
-```
-https://hooks.slack.com/services/aaa/bbb/ccc
-```
+1. Create a Slack app by visiting [this link](https://api.slack.com/apps?new_app=1).
 
-## How get GH_ACCESS_TOKEN
+2. Activate "Incoming Webhooks" for your app.
 
-To get GH_ACCESS_TOKEN we can use GITHUB_TOKEN env already available in secrets or create our own. <br/>
-If our repo is private we cannot use GITHUB_TOKEN from github actions, so we need to create own token. <br/>
-At first, you need visit the [LINK](https://github.com/settings/tokens). <br/>
-Then you need to generate new token. <br/>
-So you need to name it and give particular permissions. <br/>
-In our case `repo` or `Full control of private repositories` will be enough. <br />
-And should look similar to:
+3. Create a new webhook by clicking "Add New Webhook to Workspace."
 
-```
-aaa-bbb-ccc-ddd-eee-fff
-```
+4. Copy the URL from the sample curl provided. The URL will look something like:
 
-## Development / contribution requirements:
+   ```
+   https://hooks.slack.com/services/aaa/bbb/ccc
+   ```
 
-Please install specific NodeJS version ( specified in engines.node inside the package.json ).
-I am recommending to use N - node manager from https://github.com/tj/n.
-If you decide to use N - node manager please just run:
+## How to Obtain GH_ACCESS_TOKEN:
 
-```
-n auto
-```
+To obtain the `GH_ACCESS_TOKEN`:
 
-### Before you will start
+1. If your repo is public, you can use the `GITHUB_TOKEN` environment variable available in secrets.
 
-Please copy `.env.example` into `.env` file and fill with correct data. <br />
-In this way we will be able to run our script locally with real data. <br />
+2. If your repo is private, you'll need to create your own access token:
 
-### How to run our application ( in development mode )
+   a. Visit [this link](https://github.com/settings/tokens).
 
-```
-npm ci
-npm run start-dev
-```
+   b. Generate a new token, providing it a name and the necessary permissions (e.g., `repo` or "Full control of private repositories").
 
-### How to run our application ( in production mode )
+   c. The token will look something like:
 
-```
-npm ci
-npm run start-prod
-```
+      ```
+      aaa-bbb-ccc-ddd-eee-fff
+      ```
+
+## Development / Contribution Requirements:
+
+Follow these steps to contribute to the development of the bot:
+
+1. Install the specific NodeJS version specified in `engines.node` within the `package.json`. You can use a node manager like [N](https://github.com/tj/n):
+
+   ```
+   n auto
+   ```
+
+2. Before you start, copy `.env.example` into a `.env` file and fill it with the correct data. This will allow you to run the script locally with real data.
+
+3. To run the application in development mode:
+
+   ```
+   npm ci
+   npm run start-dev
+   ```
+
+4. To run the application in production mode:
+
+   ```
+   npm ci
+   npm run start-prod
+   ```
